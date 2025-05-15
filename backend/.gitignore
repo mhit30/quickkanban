@@ -1,0 +1,29 @@
+# Node.js dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Debug log file
+npm-debug.log*
+
+# Optional npm cache directory
+.npm
+
+# Build output
+dist/
+build/
+
+# Logs
+logs/
+*.log
+
+#IDE
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# System files
+.DS_Store

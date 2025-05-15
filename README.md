@@ -1,4 +1,4 @@
-# 👨‍💻👩‍💻 Real-Time Task Board
+# 👨‍💻👩‍💻 Quick Kanban
 
 A collaborative kanban board built for quick project development.
 

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const TodoSchema = new mongoose.Schema({
+const TaskSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   status: {
@@ -12,8 +12,9 @@ const TodoSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  cols: [String],
   user: { type: String, required: true },
-  roomId: { type: String, required: true },
+  roomId: { type: String, required: true }, // one board per room
 });
 
-module.exports = mongoose.model("todo", TodoSchema);
+module.exports = mongoose.model("task", TaskSchema);

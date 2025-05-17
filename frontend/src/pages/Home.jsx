@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import Task from "@/components/ui/Task";
+import Task from "@/components/Task";
 import {
   VStack,
   HStack,
@@ -11,6 +11,7 @@ import {
   Box,
 } from "@chakra-ui/react";
 import { io } from "socket.io-client";
+import Board from "@/components/Board";
 
 const apiURL = import.meta.env.VITE_API_URL;
 function Home() {
@@ -97,23 +98,12 @@ function Home() {
     };
   }, [socket]);
 
-  useEffect(() => {
-    console.log(users);
-  }, [users]);
-
   return (
     <>
       {!hasJoined ? (
-        <Flex
-          position="fixed"
-          top={40}
-          width="100%"
-          justify="center"
-          zIndex="1000"
-          p={4}
-          gap={4}
-        >
+        <Flex direction="column" height="100vh" justify="center" p={4}>
           <VStack>
+            <Text textStyle="2xl">Quick Kanban</Text>
             <Input
               width="400px"
               placeholder="Type your username here..."
@@ -132,83 +122,64 @@ function Home() {
           </VStack>
         </Flex>
       ) : (
-        <VStack>
+        <Flex direction="column" height="100vh" overflow="hidden">
           <Box
             position="fixed"
-            top={40}
+            top={4}
             width="100%"
             zIndex="1000"
             bg="white"
             gap={4}
-            pg={4}
-          >
-            <Flex justify="center">
-              <VStack>
-                <HStack align="start">
-                  <Text fontSize="md" fontWeight="semibold">
-                    Username: {username}
-                  </Text>
-                  <Text fontSize="md" fontWeight="semibold">
-                    Room Id: {roomId}
-                  </Text>
-                </HStack>
-                <HStack align="start">
-                  <Text animation="pulse 2s infinite" color="green.600">
-                    Live Users:
-                  </Text>
-                  {users.map((item, key) => (
-                    <Text key={key}>{item.username}</Text>
-                  ))}
-                </HStack>
-                <VStack align="start">
-                  <Input
-                    width="400px"
-                    placeholder="Add a title..."
-                    value={newTask.title}
-                    onChange={(e) =>
-                      setNewTask((prev) => ({
-                        ...prev,
-                        title: e.target.value,
-                      }))
-                    }
-                  />
-                  <Input
-                    width="400px"
-                    placeholder="Add a description..."
-                    value={newTask.description}
-                    onChange={(e) =>
-                      setNewTask((prev) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }))
-                    }
-                  />
-                </VStack>
-                <Button onClick={handleTaskSubmit}>Add Task</Button>
-              </VStack>
-            </Flex>
-          </Box>
-          <Box
-            mt="350px"
-            flex="1"
-            overflow="auto"
-            display="flex"
-            justifyContent="center"
             p={4}
           >
-            <Box width="100%" maxW="500px">
-              <VStack separator={<StackSeparator />} align="stretch">
-                {tasks.length == 0 ? (
-                  <Text textStyle="md">No tasks for now</Text>
-                ) : (
-                  tasks.map((item, index) => (
-                    <Task taskItem={item} key={index} />
-                  ))
-                )}
+            <VStack>
+              <HStack align="start">
+                <Text fontSize="md" fontWeight="semibold">
+                  Username: {username}
+                </Text>
+                <Text fontSize="md" fontWeight="semibold">
+                  Room Id: {roomId}
+                </Text>
+              </HStack>
+              <HStack align="start">
+                <Text animation="pulse 2s infinite" color="green.600">
+                  Live Users:
+                </Text>
+                {users.map((item, key) => (
+                  <Text key={key}>{item.username}</Text>
+                ))}
+              </HStack>
+              <VStack align="start">
+                <Input
+                  width="400px"
+                  placeholder="Add a title..."
+                  value={newTask.title}
+                  onChange={(e) =>
+                    setNewTask((prev) => ({
+                      ...prev,
+                      title: e.target.value,
+                    }))
+                  }
+                />
+                <Input
+                  width="400px"
+                  placeholder="Add a description..."
+                  value={newTask.description}
+                  onChange={(e) =>
+                    setNewTask((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                />
               </VStack>
-            </Box>
+              <Button onClick={handleTaskSubmit}>Add Task</Button>
+            </VStack>
           </Box>
-        </VStack>
+          <Box mt="250px" flex="1" overflow="auto" px={4}>
+            <Board />
+          </Box>
+        </Flex>
       )}
     </>
   );

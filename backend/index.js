@@ -56,7 +56,6 @@ io.on("connection", async (socket) => {
       id: s.id,
       username: s.username,
     }));
-    console.log(userList);
     io.to(socket.roomId).emit("users", userList);
   }, 0);
 

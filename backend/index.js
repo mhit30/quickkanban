@@ -6,7 +6,7 @@ const cors = require("cors");
 const { Server } = require("socket.io");
 const mongoose = require("mongoose");
 // My imports
-const Task = require("./models/Task");
+const { Room, Column, Task } = require("./models/Board");
 
 const app = express();
 const server = http.createServer(app);
@@ -34,8 +34,7 @@ io.use(async (socket, next) => {
 
   // ensure no duplicate usernames in roomid
   const groupSocket = await io.in(roomId).fetchSockets();
-
-  const duplicate = groupSocket.find((s) => s.username === username);
+  const duplicate = groupSocket.find((s) => s.username === username.trim());
   if (duplicate) {
     return next(new Error("Username already taken for this room."));
   }
@@ -48,42 +47,203 @@ io.on("connection", async (socket) => {
   // join the specific room
   socket.join(socket.roomId);
 
+  // console log for debugging
   console.log(`${socket.username} joined room ${socket.roomId}`);
 
-  setTimeout(async () => {
-    const usersInRoom = await io.in(socket.roomId).fetchSockets();
-    const userList = usersInRoom.map((s) => ({
-      id: s.id,
-      username: s.username,
-    }));
-    io.to(socket.roomId).emit("users", userList);
-  }, 0);
+  let room = await Room.findOne({ roomId: socket.roomId });
+  if (!room) {
+    room = await Room.create({ roomId: socket.roomId });
+    console.log(`New Room Created With Id: ${socket.roomId}`);
+  }
 
-  // add to tasks
-  socket.on("add-task", async (task) => {
+  // emit the username of new user
+  const groupSocket = await io.in(socket.roomId).fetchSockets();
+  const users = groupSocket.map((socket) => socket.username);
+  io.to(socket.roomId).emit("users", users);
+  // get all the columns and tasks for this room
+  const columns = await Column.find({ roomId: room._id });
+  const tasks = await Task.find({ room: room._id }).sort({ createdAt: 1 });
+
+  const board = {};
+
+  for (const col of columns) {
+    board[col._id] = {
+      title: col.name,
+      tasks: tasks.filter(
+        (task) => task.column.toString() === col._id.toString() // get all the tasks associated with that specific column (col)
+      ),
+    };
+  }
+
+  // emit the new user
+  io.to(socket.roomId).emit("board", board);
+
+  socket.on("addTask", async ({ roomId, columnId, title, user }) => {
     try {
-      const newTask = new Task({
-        title: task.title,
-        description: task.description,
-        user: socket.username,
-        roomId: socket.roomId,
+      const room = await Room.findOne({ roomId: roomId });
+      if (!room) return;
+      const task = await Task.create({
+        title: title,
+        user: user,
+        column: columnId,
+        room: room._id,
       });
-      await newTask.save();
+
+      // get all the columns and tasks for this room
+      const columns = await Column.find({ roomId: room._id });
+      const tasks = await Task.find({ room: room._id }).sort({
+        createdAt: 1,
+      });
+
+      const board = {};
+
+      for (const col of columns) {
+        board[col._id] = {
+          title: col.name,
+          tasks: tasks.filter(
+            (task) => task.column.toString() === col._id.toString() // get all the tasks associated with that specific column (col)
+          ),
+        };
+      }
+
+      io.to(roomId).emit("board", board);
     } catch (err) {
-      console.log(err);
+      console.log("Error adding task: ", err.message);
     }
   });
-  // emit signal to broadcast taks
-  socket.on("get-tasks", async () => {
+
+  socket.on("deleteTask", async ({ roomId, taskId }) => {
     try {
-      // get all the tasks for that room
-      const tasks = await Task.find({ roomId: socket.roomId }).sort({
-        createdAt: -1,
+      const room = await Room.findOne({ roomId: roomId });
+      if (!room) return;
+      await Task.deleteOne({ _id: taskId, room: room._id });
+
+      // get all the columns and tasks for this room
+      const columns = await Column.find({ roomId: room._id });
+      const tasks = await Task.find({ room: room._id }).sort({
+        createdAt: 1,
       });
-      // emit task to the room
-      io.to(socket.roomId).emit("tasks", tasks);
+
+      const board = {};
+
+      for (const col of columns) {
+        board[col._id] = {
+          title: col.name,
+          tasks: tasks.filter(
+            (task) => task.column.toString() === col._id.toString() // get all the tasks associated with that specific column (col)
+          ),
+        };
+      }
+
+      io.to(roomId).emit("board", board);
     } catch (err) {
-      console.log(err);
+      console.log("Error deleting task: ", err.message);
+    }
+  });
+
+  socket.on(
+    "moveTask",
+    async ({ roomId, taskId, fromColumnId, toColumnId }) => {
+      try {
+        const room = await Room.findOne({ roomId: roomId });
+        if (!room) return;
+        const task = await Task.findOne({
+          room: room._id,
+          column: fromColumnId,
+          _id: taskId,
+        });
+
+        if (!task) return;
+
+        task.column = toColumnId;
+        await task.save();
+
+        // get all the columns and tasks for this room
+        const columns = await Column.find({ roomId: room._id });
+        const tasks = await Task.find({ room: room._id }).sort({
+          createdAt: 1,
+        });
+
+        const board = {};
+
+        for (const col of columns) {
+          board[col._id] = {
+            title: col.name,
+            tasks: tasks.filter(
+              (task) => task.column.toString() === col._id.toString() // get all the tasks associated with that specific column (col)
+            ),
+          };
+        }
+
+        io.to(roomId).emit("board", board);
+      } catch (err) {
+        console.log("Error moving task: ", err.message);
+      }
+    }
+  );
+
+  socket.on("createColumn", async ({ newColumnName, roomId }) => {
+    try {
+      const room = await Room.findOne({ roomId: roomId });
+      const column = await Column.create({
+        name: newColumnName,
+        roomId: room._id,
+      });
+
+      // get all the columns and tasks for this room
+      const columns = await Column.find({ roomId: room._id });
+      const tasks = await Task.find({ room: room._id }).sort({
+        createdAt: 1,
+      });
+
+      const board = {};
+
+      for (const col of columns) {
+        board[col._id] = {
+          title: col.name,
+          tasks: tasks.filter(
+            (task) => task.column.toString() === col._id.toString() // get all the tasks associated with that specific column (col)
+          ),
+        };
+      }
+
+      io.to(roomId).emit("board", board);
+    } catch (err) {
+      console.log("Error creating new column: ", err.message);
+    }
+  });
+
+  socket.on("deleteColumn", async ({ roomId, columnId }) => {
+    try {
+      const room = await Room.findOne({ roomId: roomId });
+      if (!room) return;
+      const column = await Column.findOne({
+        _id: columnId,
+        roomId: room._id,
+      });
+      if (!column) return;
+      await Task.deleteMany({ column: column._id });
+      await column.deleteOne();
+      // get all the columns and tasks for this room
+      const columns = await Column.find({ roomId: room._id });
+      const tasks = await Task.find({ room: room._id }).sort({
+        createdAt: 1,
+      });
+
+      const board = {};
+
+      for (const col of columns) {
+        board[col._id] = {
+          title: col.name,
+          tasks: tasks.filter(
+            (task) => task.column.toString() === col._id.toString() // get all the tasks associated with that specific column (col)
+          ),
+        };
+      }
+
+      io.to(roomId).emit("board", board);
+    } catch (err) {
+      console.log("Error creating new column: ", err.message);
     }
   });
 

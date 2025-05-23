@@ -1,18 +1,25 @@
-import { VStack, Text } from "@chakra-ui/react";
-
-function Task({ taskItem, onDragStart }) {
+import { Flex, Text, CloseButton } from "@chakra-ui/react";
+function Task({ taskId, title, onDelete, columnId }) {
+  const handleDragStart = (e) => {
+    e.dataTransfer.setData(
+      "text/plain",
+      JSON.stringify({ taskId, fromColumn: columnId })
+    );
+  };
   return (
-    <VStack
-      width={250}
-      bg="gray.50"
-      p={4}
-      draggable
-      onDragStart={(e) => onDragStart(e, taskItem)}
+    <Flex
+      draggable="true"
+      onDragStart={handleDragStart}
+      justify="space-between"
+      align="center"
+      p={3}
+      bg="white"
+      borderRadius="md"
+      boxShadow="sm"
     >
-      <Text textStyle="md">{taskItem.title}</Text>
-      <Text textStyle="sm">{taskItem.description}</Text>
-      <Text textStyle="xs">Created By: {taskItem.user}</Text>
-    </VStack>
+      <Text>{title}</Text>
+      <CloseButton size="sm" variant="ghost" onClick={onDelete} />
+    </Flex>
   );
 }
 

@@ -108,7 +108,7 @@ io.on("connection", async (socket) => {
 
       io.to(roomId).emit("board", board);
     } catch (err) {
-      console.log("Error adding task: ", err.message);
+      socket.emit("error", "Error adding task.");
     }
   });
 
@@ -137,7 +137,7 @@ io.on("connection", async (socket) => {
 
       io.to(roomId).emit("board", board);
     } catch (err) {
-      console.log("Error deleting task: ", err.message);
+      socket.emit("error", "Error deleting task.");
     }
   });
 
@@ -177,7 +177,7 @@ io.on("connection", async (socket) => {
 
         io.to(roomId).emit("board", board);
       } catch (err) {
-        console.log("Error moving task: ", err.message);
+        socket.emit("error", "Error moving task.");
       }
     }
   );
@@ -209,7 +209,7 @@ io.on("connection", async (socket) => {
 
       io.to(roomId).emit("board", board);
     } catch (err) {
-      console.log("Error creating new column: ", err.message);
+      socket.emit("error", "Error creating column.");
     }
   });
 
@@ -243,17 +243,14 @@ io.on("connection", async (socket) => {
 
       io.to(roomId).emit("board", board);
     } catch (err) {
-      console.log("Error creating new column: ", err.message);
+      socket.emit("error", "Error deleting task.");
     }
   });
 
   socket.on("disconnect", async (reason) => {
-    const usersInRoom = await io.in(socket.roomId).fetchSockets();
-    const userList = usersInRoom.map((s) => ({
-      id: s.id,
-      username: s.username,
-    }));
-    io.to(socket.roomId).emit("users", userList);
+    const groupSocket = await io.in(socket.roomId).fetchSockets();
+    const users = groupSocket.map((socket) => socket.username);
+    io.to(socket.roomId).emit("users", users);
     console.log(`${socket.username} disconnected from room ${socket.roomId}`);
   });
 });

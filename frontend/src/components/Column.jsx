@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { VStack, Text, Flex, Input, Button } from "@chakra-ui/react";
+import { HiTrash } from "react-icons/hi";
 import Task from "./Task";
 
 function Column({
@@ -12,7 +13,6 @@ function Column({
   onDeleteColumn,
 }) {
   const [newTask, setNewTask] = useState("");
-
   const handleDrop = (e) => {
     e.preventDefault();
     const data = JSON.parse(e.dataTransfer.getData("text/plain"));
@@ -42,22 +42,25 @@ function Column({
       align="stretch"
       spacing={3}
     >
-      <Text fontWeight="bold" fontSize="xl">
-        {title}
-      </Text>
-      <Button
-        onClick={() => onDeleteColumn(columnId)}
-        variant="ghost"
-        color="red.300"
-      >
-        Delete Column
-      </Button>
+      <Flex justify="space-between" align="center" w="full" mb={2}>
+        <Text fontWeight="bold" fontSize="xl">
+          {title}
+        </Text>
+        <Button
+          onClick={() => onDeleteColumn(columnId)}
+          variant="ghost"
+          color="red.300"
+        >
+          <HiTrash />
+        </Button>
+      </Flex>
       {tasks.map((task) => (
         <Task
           key={task._id}
           taskId={task._id}
           columnId={columnId}
           title={task.title}
+          user={task.user}
           onDelete={() => onDeleteTask(task._id)}
         />
       ))}

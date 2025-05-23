@@ -1,4 +1,4 @@
-# 👨‍💻👩‍💻 Quick Kanban
+# 👨‍💻👩‍💻 QuickKanban
 
 A collaborative kanban board built for quick project development.
 

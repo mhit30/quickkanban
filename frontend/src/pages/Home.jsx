@@ -1,9 +1,20 @@
-import { HStack, VStack, Input, Button, Text, Flex } from "@chakra-ui/react";
+import {
+  HStack,
+  VStack,
+  Input,
+  Button,
+  Text,
+  Flex,
+  Box,
+} from "@chakra-ui/react";
 import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
+import { keyframes } from "@emotion/react";
 // my imports
 import Column from "../components/Column";
 
+const bounce = keyframes`0%, 100% {transform: translateY(0)}
+                        50% {transform: translateY(-3px); }`;
 function Home() {
   const socketRef = useRef(null);
   const roomIdRef = useRef("");
@@ -28,6 +39,9 @@ function Home() {
       setError(err.message);
     });
 
+    socket.on("error", (err) => {
+      setError(err);
+    });
     socket.on("board", (initialBoard) => {
       setBoard(initialBoard);
       setHasJoined(true);
@@ -83,6 +97,44 @@ function Home() {
         </VStack>
       ) : board ? (
         <Flex direction="column" p={4} m={4}>
+          <HStack m={2}>
+            <Text fontWeight="semibold">Room ID: {roomIdRef.current}</Text>
+            <Box
+              w="10px"
+              h="10px"
+              borderRadius="full"
+              bg="green.400"
+              animation={`${bounce} 1s infinite`}
+            />
+            <Text fontWeight="semibold">Live Users: </Text>
+            {users.map((username, index) => {
+              return <Text key={index}>{username}</Text>;
+            })}
+          </HStack>
+          <HStack m={2}>{error && <Text color="red.500">{error}</Text>}</HStack>
+          <Box w="75vw" p={2}>
+            <Flex gap={2}>
+              <Input
+                flex="1"
+                placeholder="Create new column"
+                value={newColumnName}
+                onChange={(e) => setNewColumnName(e.target.value)}
+              />
+              <Button onClick={handleCreateNewColumn}>Add Column</Button>
+              <Button
+                onClick={() => {
+                  socketRef.current?.disconnect();
+                  socketRef.current = null;
+                  setHasJoined(false);
+                  setBoard(null);
+                }}
+                backgroundColor="red.500"
+              >
+                Leave Room
+              </Button>
+            </Flex>
+          </Box>
+
           <HStack align="start" spacing={4}>
             {Object.entries(board).map(([columnId, column]) => {
               return (
@@ -121,31 +173,6 @@ function Home() {
                   }}
                 />
               );
-            })}
-          </HStack>
-          <HStack m={4}>
-            <Input
-              placeholder="Create new column"
-              value={newColumnName}
-              onChange={(e) => setNewColumnName(e.target.value)}
-            />
-            <Button onClick={handleCreateNewColumn}>Add Column</Button>
-            <Button
-              onClick={() => {
-                socketRef.current?.disconnect();
-                socketRef.current = null;
-                setHasJoined(false);
-                setBoard(null);
-              }}
-              backgroundColor="red.500"
-            >
-              Leave Room
-            </Button>
-          </HStack>
-          <HStack m={4}>
-            <Text>Live Users: </Text>
-            {users.map((username, index) => {
-              return <Text key={index}>{username}</Text>;
             })}
           </HStack>
         </Flex>

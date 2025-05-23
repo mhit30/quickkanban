@@ -246,7 +246,9 @@ io.on("connection", async (socket) => {
       socket.emit("error", "Error deleting task.");
     }
   });
-
+  socket.on("cursor-move", ({ x, y, username, roomId }) => {
+    io.to(roomId).emit("cursor-update", { username, x, y });
+  });
   socket.on("disconnect", async (reason) => {
     const groupSocket = await io.in(socket.roomId).fetchSockets();
     const users = groupSocket.map((socket) => socket.username);

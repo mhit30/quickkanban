@@ -27,6 +27,7 @@ function Home() {
 
   const [newColumnName, setNewColumnName] = useState("");
   const [users, setUsers] = useState([]);
+  const [cursors, setCursors] = useState({});
 
   const handleJoin = () => {
     const socket = io("http://localhost:5001", {
@@ -35,6 +36,7 @@ function Home() {
     });
     roomIdRef.current = roomId;
     usernameRef.current = username;
+    socketRef.current = socket;
     socket.on("connect_error", (err) => {
       setError(err.message);
     });
@@ -47,13 +49,13 @@ function Home() {
       setHasJoined(true);
       setUsername("");
       setRoomId("");
+      setError("");
     });
 
     socket.on("users", (allUsers) => {
       setUsers(allUsers);
     });
     socket.connect(); // only connect after our listeners are set, thus firing listening only after connection set
-    socketRef.current = socket;
   };
 
   const handleCreateNewColumn = () => {
@@ -65,13 +67,38 @@ function Home() {
   };
 
   useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket) return;
+
+    const handleMouseMove = (e) => {
+      socket.emit("cursor-move", {
+        x: e.clientX,
+        y: e.clientY,
+        username: usernameRef.current,
+        roomId: roomIdRef.current,
+      });
+    };
+
+    const handleCursorUpdate = ({ username, x, y }) => {
+      setCursors((prev) => {
+        return {
+          ...prev,
+          [username]: { x, y },
+        };
+      });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    socketRef.current.on("cursor-update", handleCursorUpdate);
+
     return () => {
       if (socketRef.current) {
         socketRef.current.off("board");
-        socketRef.current.disconnect();
+        socketRef.current.off("cursor-update");
+        window.removeEventListener("mousemove", handleMouseMove);
       }
     };
-  }, []);
+  }, [hasJoined]);
 
   return (
     <VStack p={4} align="start">
@@ -175,6 +202,25 @@ function Home() {
               );
             })}
           </HStack>
+          {Object.entries(cursors).map(([username, pos]) => (
+            <Box
+              key={username}
+              position="fixed"
+              top={pos.y}
+              left={pos.x}
+              bg="blue.500"
+              color="white"
+              px={2}
+              py={1}
+              fontSize="xs"
+              borderRadius="sm"
+              pointerEvents="none"
+              transform="translate(-50%, -100%)"
+              zIndex={9999}
+            >
+              {username}
+            </Box>
+          ))}
         </Flex>
       ) : (
         <Text>Loading board...</Text>

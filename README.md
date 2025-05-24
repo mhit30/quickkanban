@@ -18,7 +18,7 @@ A collaborative kanban board built for quick project development.
 ## Features
 
 - **Real-time updates** using Socket.IO
-- Add tasks with titles, description, and priority (soon)
+- Add tasks with titles, description, creator, time created, etc
 - Track live team members in rooms
 - Task storage using MongoDB
 - Frontend built with React + Chakra UI

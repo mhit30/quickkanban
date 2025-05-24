@@ -6,6 +6,8 @@
 
 A collaborative kanban board built for quick project development.
 
+Try it out: [quickkanban.xyz](https://quickkanban.xyz).
+
 [![Socket.IO](https://img.shields.io/badge/Socket.IO-black?logo=socket.io&style=for-the-badge)](https://socket.io/)
 [![React](https://img.shields.io/badge/React-20232a?logo=react&logoColor=61dafb&style=for-the-badge)](https://reactjs.org/)
 [![Express](https://img.shields.io/badge/Express.js-404D59?logo=express&style=for-the-badge)](https://expressjs.com/)

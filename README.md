@@ -1,5 +1,9 @@
 # 👨‍💻👩‍💻 QuickKanban
 
+<div align="center">
+  <img src="./public/quickkanbanlogo.svg" width="48" alt="QuickKanban logo"/>
+</div>
+
 A collaborative kanban board built for quick project development.
 
 [![Socket.IO](https://img.shields.io/badge/Socket.IO-black?logo=socket.io&style=for-the-badge)](https://socket.io/)

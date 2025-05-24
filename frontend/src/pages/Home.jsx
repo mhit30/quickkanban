@@ -13,6 +13,8 @@ import { keyframes } from "@emotion/react";
 // my imports
 import Column from "../components/Column";
 
+const apiURL = import.meta.env.VITE_API_URL;
+
 const bounce = keyframes`0%, 100% {transform: translateY(0)}
                         50% {transform: translateY(-3px); }`;
 function Home() {
@@ -30,7 +32,7 @@ function Home() {
   const [cursors, setCursors] = useState({});
 
   const handleJoin = () => {
-    const socket = io("http://localhost:5001", {
+    const socket = io(`${apiURL}`, {
       autoConnect: false,
       auth: { username, roomId },
     });
@@ -80,12 +82,14 @@ function Home() {
     };
 
     const handleCursorUpdate = ({ username, x, y }) => {
-      setCursors((prev) => {
-        return {
-          ...prev,
-          [username]: { x, y },
-        };
-      });
+      if (username != usernameRef.current) {
+        setCursors((prev) => {
+          return {
+            ...prev,
+            [username]: { x, y },
+          };
+        });
+      }
     };
 
     window.addEventListener("mousemove", handleMouseMove);

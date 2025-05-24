@@ -259,7 +259,7 @@ io.on("connection", async (socket) => {
 
 mongoose.connect(process.env.MONGO_URI).then(() => {
   console.log("MongoDB connected");
-  server.listen(5001, () => {
-    console.log("Server running on port 5000");
+  server.listen(process.env.PORT, () => {
+    console.log(`Server running on port ${process.env.CLIENT_URL}`);
   });
 });

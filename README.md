@@ -1,7 +1,7 @@
 # 👨‍💻👩‍💻 QuickKanban
 
 <div align="center">
-  <img src="./public/quickkanbanlogo.svg" width="48" alt="QuickKanban logo"/>
+  <img src="./frontend/public/quickkanbanlogo.svg" width="48" alt="QuickKanban logo"/>
 </div>
 
 A collaborative kanban board built for quick project development.

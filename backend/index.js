@@ -11,7 +11,7 @@ const { Room, Column, Task } = require("./models/Board");
 const app = express();
 const server = http.createServer(app);
 
-app.use(cors({ origin: process.env.CLIENT_URL }));
+app.use(cors({ origin: process.env.CLIENT_URL_PROD }));
 app.use(express.json());
 
 const io = new Server(server, {

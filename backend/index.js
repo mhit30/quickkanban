@@ -7,16 +7,22 @@ const { Server } = require("socket.io");
 const mongoose = require("mongoose");
 // My imports
 const { Room, Column, Task } = require("./models/Board");
+const { getBoard } = require("./getBoard");
 
 const app = express();
 const server = http.createServer(app);
 
-app.use(cors({ origin: process.env.CLIENT_URL_PROD }));
+prod = false;
+CLIENT = prod ? process.env.CLIENT_URL_PROD : process.env.CLIENT_URL;
+PORT = prod ? process.env.PORT : 5001;
+MONGO_URI = prod ? process.env.MONGO_URI_PROD : process.env.MONGO_URI;
+
+app.use(cors({ origin: CLIENT }));
 app.use(express.json());
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL_PROD,
+    origin: CLIENT,
     methods: ["GET", "POST"],
   },
 });
@@ -60,20 +66,8 @@ io.on("connection", async (socket) => {
   const groupSocket = await io.in(socket.roomId).fetchSockets();
   const users = groupSocket.map((socket) => socket.username);
   io.to(socket.roomId).emit("users", users);
-  // get all the columns and tasks for this room
-  const columns = await Column.find({ roomId: room._id });
-  const tasks = await Task.find({ room: room._id }).sort({ createdAt: 1 });
 
-  const board = {};
-
-  for (const col of columns) {
-    board[col._id] = {
-      title: col.name,
-      tasks: tasks.filter(
-        (task) => task.column.toString() === col._id.toString() // get all the tasks associated with that specific column (col)
-      ),
-    };
-  }
+  const board = await getBoard(room._id);
 
   // emit the new user
   io.to(socket.roomId).emit("board", board);
@@ -89,23 +83,8 @@ io.on("connection", async (socket) => {
         room: room._id,
       });
 
-      // get all the columns and tasks for this room
-      const columns = await Column.find({ roomId: room._id });
-      const tasks = await Task.find({ room: room._id }).sort({
-        createdAt: 1,
-      });
-
-      const board = {};
-
-      for (const col of columns) {
-        board[col._id] = {
-          title: col.name,
-          tasks: tasks.filter(
-            (task) => task.column.toString() === col._id.toString() // get all the tasks associated with that specific column (col)
-          ),
-        };
-      }
-
+      // roomid is literally ._id for mongo doc
+      const board = await getBoard(room._id);
       io.to(roomId).emit("board", board);
     } catch (err) {
       socket.emit("error", "Error adding task.");
@@ -118,22 +97,7 @@ io.on("connection", async (socket) => {
       if (!room) return;
       await Task.deleteOne({ _id: taskId, room: room._id });
 
-      // get all the columns and tasks for this room
-      const columns = await Column.find({ roomId: room._id });
-      const tasks = await Task.find({ room: room._id }).sort({
-        createdAt: 1,
-      });
-
-      const board = {};
-
-      for (const col of columns) {
-        board[col._id] = {
-          title: col.name,
-          tasks: tasks.filter(
-            (task) => task.column.toString() === col._id.toString() // get all the tasks associated with that specific column (col)
-          ),
-        };
-      }
+      const board = await getBoard(room._id);
 
       io.to(roomId).emit("board", board);
     } catch (err) {
@@ -158,22 +122,7 @@ io.on("connection", async (socket) => {
         task.column = toColumnId;
         await task.save();
 
-        // get all the columns and tasks for this room
-        const columns = await Column.find({ roomId: room._id });
-        const tasks = await Task.find({ room: room._id }).sort({
-          createdAt: 1,
-        });
-
-        const board = {};
-
-        for (const col of columns) {
-          board[col._id] = {
-            title: col.name,
-            tasks: tasks.filter(
-              (task) => task.column.toString() === col._id.toString() // get all the tasks associated with that specific column (col)
-            ),
-          };
-        }
+        const board = await getBoard(room._id);
 
         io.to(roomId).emit("board", board);
       } catch (err) {
@@ -190,22 +139,7 @@ io.on("connection", async (socket) => {
         roomId: room._id,
       });
 
-      // get all the columns and tasks for this room
-      const columns = await Column.find({ roomId: room._id });
-      const tasks = await Task.find({ room: room._id }).sort({
-        createdAt: 1,
-      });
-
-      const board = {};
-
-      for (const col of columns) {
-        board[col._id] = {
-          title: col.name,
-          tasks: tasks.filter(
-            (task) => task.column.toString() === col._id.toString() // get all the tasks associated with that specific column (col)
-          ),
-        };
-      }
+      const board = await getBoard(room._id);
 
       io.to(roomId).emit("board", board);
     } catch (err) {
@@ -224,22 +158,8 @@ io.on("connection", async (socket) => {
       if (!column) return;
       await Task.deleteMany({ column: column._id });
       await column.deleteOne();
-      // get all the columns and tasks for this room
-      const columns = await Column.find({ roomId: room._id });
-      const tasks = await Task.find({ room: room._id }).sort({
-        createdAt: 1,
-      });
 
-      const board = {};
-
-      for (const col of columns) {
-        board[col._id] = {
-          title: col.name,
-          tasks: tasks.filter(
-            (task) => task.column.toString() === col._id.toString() // get all the tasks associated with that specific column (col)
-          ),
-        };
-      }
+      const board = await getBoard(room._id);
 
       io.to(roomId).emit("board", board);
     } catch (err) {
@@ -257,9 +177,9 @@ io.on("connection", async (socket) => {
   });
 });
 
-mongoose.connect(process.env.MONGO_URI_PROD).then(() => {
+mongoose.connect(MONGO_URI).then(() => {
   console.log("MongoDB connected");
-  server.listen(process.env.PORT || 5001, () => {
-    console.log(`Server running on port ${process.env.PORT}`);
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
   });
 });

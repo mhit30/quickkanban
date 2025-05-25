@@ -12,7 +12,7 @@ const { getBoard } = require("./getBoard");
 const app = express();
 const server = http.createServer(app);
 
-prod = false;
+prod = true;
 CLIENT = prod ? process.env.CLIENT_URL_PROD : process.env.CLIENT_URL;
 PORT = prod ? process.env.PORT : 5001;
 MONGO_URI = prod ? process.env.MONGO_URI_PROD : process.env.MONGO_URI;

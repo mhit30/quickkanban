@@ -105,27 +105,39 @@ function Home() {
   }, [hasJoined]);
 
   return (
-    <VStack p={4} align="start">
+    <>
       {!hasJoined ? (
-        <VStack spacing={4} align="stretch" w="300px">
-          <Text fontSize="2xl" fontWeight="bold">
-            Join a Room
-          </Text>
-          <Input
-            placeholder="Enter a username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <Input
-            placeholder="Enter a room ID"
-            value={roomId}
-            onChange={(e) => setRoomId(e.target.value)}
-          />
-          <Button onClick={handleJoin} colorScheme="blue">
-            Join Room
-          </Button>
-          {error && <Text color="red.500">{error}</Text>}
-        </VStack>
+        <Flex height="100vh" widht="100vh" align="center" justify="center">
+          <VStack spacing={4} align="stretch" w="300px">
+            <Flex justify="center" align="center">
+              <VStack>
+                <Text fontSize="3xl" fontWeight="black">
+                  QuickKanban
+                </Text>
+                <Text fontSize="md" fontWeight="medium" color="gray.500">
+                  Build a high level task board in seconds!
+                </Text>
+              </VStack>
+            </Flex>
+            <Text fontSize="2xl" fontWeight="bold">
+              Create or Join A Room
+            </Text>
+            <Input
+              placeholder="Enter a username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <Input
+              placeholder="Enter a new or existing room ID"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+            />
+            <Button onClick={handleJoin} colorScheme="blue">
+              Join Room
+            </Button>
+            {error && <Text color="red.500">{error}</Text>}
+          </VStack>
+        </Flex>
       ) : board ? (
         <Flex direction="column" p={4} m={4}>
           <HStack m={2}>
@@ -143,28 +155,25 @@ function Home() {
             })}
           </HStack>
           <HStack m={2}>{error && <Text color="red.500">{error}</Text>}</HStack>
-          <Box w="75vw" p={2}>
-            <Flex gap={2}>
-              <Input
-                flex="1"
-                placeholder="Create new column"
-                value={newColumnName}
-                onChange={(e) => setNewColumnName(e.target.value)}
-              />
-              <Button onClick={handleCreateNewColumn}>Add Column</Button>
-              <Button
-                onClick={() => {
-                  socketRef.current?.disconnect();
-                  socketRef.current = null;
-                  setHasJoined(false);
-                  setBoard(null);
-                }}
-                backgroundColor="red.500"
-              >
-                Leave Room
-              </Button>
-            </Flex>
-          </Box>
+          <HStack gap={2} m={4}>
+            <Input
+              placeholder="Create new column"
+              value={newColumnName}
+              onChange={(e) => setNewColumnName(e.target.value)}
+            />
+            <Button onClick={handleCreateNewColumn}>Add Column</Button>
+            <Button
+              onClick={() => {
+                socketRef.current?.disconnect();
+                socketRef.current = null;
+                setHasJoined(false);
+                setBoard(null);
+              }}
+              backgroundColor="red.500"
+            >
+              Leave Room
+            </Button>
+          </HStack>
 
           <HStack align="start" spacing={4}>
             {Object.entries(board).map(([columnId, column]) => {
@@ -229,7 +238,7 @@ function Home() {
       ) : (
         <Text>Loading board...</Text>
       )}
-    </VStack>
+    </>
   );
 }
 export default Home;

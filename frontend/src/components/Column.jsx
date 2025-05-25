@@ -38,7 +38,8 @@ function Column({
       bg="gray.100"
       p={4}
       borderRadius="md"
-      minW="250px"
+      minW="350px"
+      maxW="275px"
       align="stretch"
       spacing={3}
     >

@@ -20,15 +20,20 @@ function Task({ taskId, title, user, onDelete, columnId }) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       justify="space-between"
-      align="center"
       p={3}
       bg="white"
       borderRadius="md"
       boxShadow="sm"
       opacity={isDragging ? 0.6 : 1}
+      w="100%"
+      maxW="100%"
+      overflow="hidden"
+      align="flex-start"
     >
-      <VStack align="start">
-        <Text>{title}</Text>
+      <VStack align="start" spacing={1} maxW="85%" flex="1">
+        <Text whiteSpace="normal" workdBreak="break-word" maxW="100%">
+          {title}
+        </Text>
         <Text fontSize="sm" fontWeight="semibold" color="gray.400">
           Changed: {user}
         </Text>

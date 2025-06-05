@@ -86,7 +86,6 @@ io.on("connection", async (socket) => {
 
   socket.on("addTask", async ({ roomId, columnId, title, user }) => {
     try {
-      console.time("addTaskTime");
       const room = await Room.findOne({ roomId: roomId });
       if (!room) return;
       const task = await Task.create({
@@ -119,15 +118,11 @@ io.on("connection", async (socket) => {
       }
     } catch (err) {
       socket.emit("error", "Error adding task.");
-    } finally {
-      console.timeEnd("addTaskTime");
     }
   });
 
   socket.on("deleteTask", async ({ roomId, columnId, taskId }) => {
     try {
-      console.time("deleteTaskTime");
-
       const room = await Room.findOne({ roomId: roomId });
       if (!room) return;
       await Task.deleteOne({ _id: taskId, room: room._id });
@@ -152,8 +147,6 @@ io.on("connection", async (socket) => {
       }
     } catch (err) {
       socket.emit("error", "Error deleting task.");
-    } finally {
-      console.timeEnd("deleteTaskTime");
     }
   });
 
@@ -161,8 +154,6 @@ io.on("connection", async (socket) => {
     "moveTask",
     async ({ roomId, taskId, fromColumnId, toColumnId }) => {
       try {
-        console.time("moveTaskTime");
-
         const room = await Room.findOne({ roomId: roomId });
         if (!room) return;
         const task = await Task.findOne({
@@ -206,15 +197,12 @@ io.on("connection", async (socket) => {
         }
       } catch (err) {
         socket.emit("error", "Error moving task.");
-      } finally {
-        console.timeEnd("moveTaskTime");
       }
     }
   );
 
   socket.on("createColumn", async ({ newColumnName, roomId }) => {
     try {
-      console.time("createColumnTime");
       const room = await Room.findOne({ roomId: roomId });
       const column = await Column.create({
         name: newColumnName,
@@ -228,7 +216,6 @@ io.on("connection", async (socket) => {
           title: column.name,
           tasks: [],
         };
-        console.log("FROM CACHE");
 
         await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
         io.to(roomId).emit("board", cachedBoard);
@@ -239,14 +226,11 @@ io.on("connection", async (socket) => {
       }
     } catch (err) {
       socket.emit("error", "Error creating column.");
-    } finally {
-      console.timeEnd("createColumnTime");
     }
   });
 
   socket.on("deleteColumn", async ({ roomId, columnId }) => {
     try {
-      console.time("deleteColumnTime");
       const room = await Room.findOne({ roomId: roomId });
       if (!room) return;
       const column = await Column.findOne({
@@ -262,7 +246,6 @@ io.on("connection", async (socket) => {
       if (cachedBoard) {
         cachedBoard = JSON.parse(cachedBoard);
         delete cachedBoard[column._id];
-        console.log("FROM CACHE");
 
         await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
         io.to(roomId).emit("board", cachedBoard);
@@ -273,8 +256,6 @@ io.on("connection", async (socket) => {
       }
     } catch (err) {
       socket.emit("error", "Error deleting task.");
-    } finally {
-      console.timeEnd("deleteColumnTime");
     }
   });
   socket.on("cursor-move", ({ x, y, username, roomId }) => {

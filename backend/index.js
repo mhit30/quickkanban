@@ -14,7 +14,8 @@ const app = express();
 const server = http.createServer(app);
 
 prod = true;
-CLIENT = prod ? process.env.CLIENT_URL_PROD : process.env.CLIENT_URL;
+CLIENT1 = prod ? process.env.CLIENT_URL_PROD1 : process.env.CLIENT_URL;
+CLIENT2 = prod ? process.env.CLIENT_URL_PROD2 : null;
 PORT = prod ? process.env.PORT : 5001;
 MONGO_URI = prod ? process.env.MONGO_URI_PROD : process.env.MONGO_URI;
 REDIS_HOST = prod ? process.env.REDIS_HOST : "127.0.0.1";
@@ -28,11 +29,11 @@ const redis = new Redis({
 });
 
 app.use(cors({ origin: CLIENT }));
-app.use(express.json());
+app.use(expressc.json());
 
 const io = new Server(server, {
   cors: {
-    origin: CLIENT,
+    origin: [CLIENT1, CLIENT2],
     methods: ["GET", "POST"],
   },
 });

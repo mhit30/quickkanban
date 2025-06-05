@@ -97,7 +97,7 @@ io.on("connection", async (socket) => {
       });
 
       // update the cached board immediately
-      let cachedBoard = null;
+      let cachedBoard = await redis.get(`room:${room._id}`);
       if (cachedBoard) {
         cachedBoard = JSON.parse(cachedBoard);
         if (cachedBoard[columnId]) {
@@ -110,11 +110,11 @@ io.on("connection", async (socket) => {
             createdAt: task.createdAt,
           });
         }
-        //await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
+        await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
         io.to(roomId).emit("board", cachedBoard);
       } else {
         const board = await getBoard(room._id);
-        //await redis.set(`room:${room._id}`, JSON.stringify(board));
+        await redis.set(`room:${room._id}`, JSON.stringify(board));
         io.to(roomId).emit("board", board);
       }
     } catch (err) {
@@ -132,7 +132,7 @@ io.on("connection", async (socket) => {
       if (!room) return;
       await Task.deleteOne({ _id: taskId, room: room._id });
 
-      let cachedBoard = null;
+      let cachedBoard = await redis.get(`room:${room._id}`);
       if (cachedBoard) {
         cachedBoard = JSON.parse(cachedBoard);
         if (cachedBoard[columnId]) {
@@ -143,11 +143,11 @@ io.on("connection", async (socket) => {
             cachedBoard[columnId].tasks.splice(index, 1);
           }
         }
-        //await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
+        await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
         io.to(roomId).emit("board", cachedBoard);
       } else {
         const board = await getBoard(room._id);
-        //await redis.set(`room:${room._id}`, JSON.stringify(board));
+        await redis.set(`room:${room._id}`, JSON.stringify(board));
         io.to(roomId).emit("board", board);
       }
     } catch (err) {
@@ -176,7 +176,7 @@ io.on("connection", async (socket) => {
         task.column = toColumnId;
         await task.save();
 
-        let cachedBoard = null;
+        let cachedBoard = await redis.get(`room:${room._id}`);
         if (cachedBoard) {
           cachedBoard = JSON.parse(cachedBoard);
           if (cachedBoard[fromColumnId]) {
@@ -197,11 +197,11 @@ io.on("connection", async (socket) => {
               createdAt: task.createdAt,
             });
           }
-          //await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
+          await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
           io.to(roomId).emit("board", cachedBoard);
         } else {
           const board = await getBoard(room._id);
-          //await redis.set(`room:${room._id}`, JSON.stringify(board));
+          await redis.set(`room:${room._id}`, JSON.stringify(board));
           io.to(roomId).emit("board", board);
         }
       } catch (err) {
@@ -221,7 +221,7 @@ io.on("connection", async (socket) => {
         roomId: room._id,
       });
 
-      let cachedBoard = null;
+      let cachedBoard = await redis.get(`room:${room._id}`);
       if (cachedBoard) {
         cachedBoard = JSON.parse(cachedBoard);
         cachedBoard[column._id] = {
@@ -230,11 +230,11 @@ io.on("connection", async (socket) => {
         };
         console.log("FROM CACHE");
 
-        //await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
+        await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
         io.to(roomId).emit("board", cachedBoard);
       } else {
         const board = await getBoard(room._id);
-        //await redis.set(`room:${room._id}`, JSON.stringify(board));
+        await redis.set(`room:${room._id}`, JSON.stringify(board));
         io.to(roomId).emit("board", board);
       }
     } catch (err) {
@@ -258,7 +258,7 @@ io.on("connection", async (socket) => {
       await column.deleteOne();
 
       // update the cache
-      let cachedBoard = null;
+      let cachedBoard = await redis.get(`room:${room._id}`);
       if (cachedBoard) {
         cachedBoard = JSON.parse(cachedBoard);
         delete cachedBoard[column._id];
@@ -268,13 +268,13 @@ io.on("connection", async (socket) => {
         io.to(roomId).emit("board", cachedBoard);
       } else {
         const board = await getBoard(room._id);
-        //await redis.set(`room:${room._id}`, JSON.stringify(board));
+        await redis.set(`room:${room._id}`, JSON.stringify(board));
         io.to(roomId).emit("board", board);
       }
     } catch (err) {
       socket.emit("error", "Error deleting task.");
     } finally {
-      console.timeEnd("deleteColumnTime");
+      console.endTime("deleteColumnTime");
     }
   });
   socket.on("cursor-move", ({ x, y, username, roomId }) => {

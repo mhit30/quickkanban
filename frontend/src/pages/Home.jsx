@@ -194,6 +194,7 @@ function Home() {
                   onDeleteTask={(taskId) => {
                     socketRef.current.emit("deleteTask", {
                       roomId: roomIdRef.current,
+                      columnId: columnId,
                       taskId: taskId,
                     });
                   }}

@@ -5,14 +5,16 @@ const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
 const mongoose = require("mongoose");
+const Redis = require("ioredis");
+
 // My imports
 const { Room, Column, Task } = require("./models/Board");
-const { getBoard } = require("./getBoard");
-
+const { getBoard } = require("./utils/getBoard");
+const redis = new Redis();
 const app = express();
 const server = http.createServer(app);
 
-prod = true;
+prod = false;
 CLIENT = prod ? process.env.CLIENT_URL_PROD : process.env.CLIENT_URL;
 PORT = prod ? process.env.PORT : 5001;
 MONGO_URI = prod ? process.env.MONGO_URI_PROD : process.env.MONGO_URI;
@@ -56,6 +58,7 @@ io.on("connection", async (socket) => {
   // console log for debugging
   console.log(`${socket.username} joined room ${socket.roomId}`);
 
+  // join the room or create a new one
   let room = await Room.findOne({ roomId: socket.roomId });
   if (!room) {
     room = await Room.create({ roomId: socket.roomId });
@@ -83,23 +86,57 @@ io.on("connection", async (socket) => {
         room: room._id,
       });
 
-      // roomid is literally ._id for mongo doc
-      const board = await getBoard(room._id);
-      io.to(roomId).emit("board", board);
+      // update the cached board immediately
+      let cachedBoard = await redis.get(`room:${room._id}`);
+      if (cachedBoard) {
+        cachedBoard = JSON.parse(cachedBoard);
+        if (cachedBoard[columnId]) {
+          cachedBoard[columnId].tasks.push({
+            _id: task._id,
+            title: task.title,
+            user: task.user,
+            column: task.column,
+            room: task.room,
+            createdAt: task.createdAt,
+          });
+        }
+        console.log("FROM CACHE");
+        await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
+        io.to(roomId).emit("board", cachedBoard);
+      } else {
+        const board = await getBoard(room._id);
+        await redis.set(`room:${room._id}`, JSON.stringify(board));
+        io.to(roomId).emit("board", board);
+      }
     } catch (err) {
       socket.emit("error", "Error adding task.");
     }
   });
 
-  socket.on("deleteTask", async ({ roomId, taskId }) => {
+  socket.on("deleteTask", async ({ roomId, columnId, taskId }) => {
     try {
       const room = await Room.findOne({ roomId: roomId });
       if (!room) return;
       await Task.deleteOne({ _id: taskId, room: room._id });
 
-      const board = await getBoard(room._id);
-
-      io.to(roomId).emit("board", board);
+      let cachedBoard = await redis.get(`room:${room._id}`);
+      if (cachedBoard) {
+        cachedBoard = JSON.parse(cachedBoard);
+        if (cachedBoard[columnId]) {
+          const index = cachedBoard[columnId].tasks.findIndex(
+            (t) => t._id == taskId
+          );
+          if (index !== -1) {
+            cachedBoard[columnId].tasks.splice(index, 1);
+          }
+        }
+        await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
+        io.to(roomId).emit("board", cachedBoard);
+      } else {
+        const board = await getBoard(room._id);
+        await redis.set(`room:${room._id}`, JSON.stringify(board));
+        io.to(roomId).emit("board", board);
+      }
     } catch (err) {
       socket.emit("error", "Error deleting task.");
     }
@@ -112,9 +149,9 @@ io.on("connection", async (socket) => {
         const room = await Room.findOne({ roomId: roomId });
         if (!room) return;
         const task = await Task.findOne({
+          _id: taskId,
           room: room._id,
           column: fromColumnId,
-          _id: taskId,
         });
 
         if (!task) return;
@@ -122,9 +159,35 @@ io.on("connection", async (socket) => {
         task.column = toColumnId;
         await task.save();
 
-        const board = await getBoard(room._id);
-
-        io.to(roomId).emit("board", board);
+        let cachedBoard = await redis.get(`room:${room._id}`);
+        if (cachedBoard) {
+          cachedBoard = JSON.parse(cachedBoard);
+          if (cachedBoard[fromColumnId]) {
+            const index = cachedBoard[fromColumnId].tasks.findIndex(
+              (t) => t._id == taskId
+            );
+            if (index !== -1) {
+              cachedBoard[fromColumnId].tasks.splice(index, 1);
+            }
+          }
+          if (cachedBoard[toColumnId]) {
+            cachedBoard[toColumnId].tasks.push({
+              _id: task._id,
+              title: task.title,
+              user: task.user,
+              column: task.column,
+              room: task.room,
+              createdAt: task.createdAt,
+            });
+          }
+          console.log("FROM CACHE");
+          await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
+          io.to(roomId).emit("board", cachedBoard);
+        } else {
+          const board = await getBoard(room._id);
+          await redis.set(`room:${room._id}`, JSON.stringify(board));
+          io.to(roomId).emit("board", board);
+        }
       } catch (err) {
         socket.emit("error", "Error moving task.");
       }
@@ -139,9 +202,22 @@ io.on("connection", async (socket) => {
         roomId: room._id,
       });
 
-      const board = await getBoard(room._id);
+      let cachedBoard = await redis.get(`room:${room._id}`);
+      if (cachedBoard) {
+        cachedBoard = JSON.parse(cachedBoard);
+        cachedBoard[column._id] = {
+          title: column.name,
+          tasks: [],
+        };
+        console.log("FROM CACHE");
 
-      io.to(roomId).emit("board", board);
+        await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
+        io.to(roomId).emit("board", cachedBoard);
+      } else {
+        const board = await getBoard(room._id);
+        await redis.set(`room:${room._id}`, JSON.stringify(board));
+        io.to(roomId).emit("board", board);
+      }
     } catch (err) {
       socket.emit("error", "Error creating column.");
     }
@@ -159,9 +235,20 @@ io.on("connection", async (socket) => {
       await Task.deleteMany({ column: column._id });
       await column.deleteOne();
 
-      const board = await getBoard(room._id);
+      // update the cache
+      let cachedBoard = await redis.get(`room:${room._id}`);
+      if (cachedBoard) {
+        cachedBoard = JSON.parse(cachedBoard);
+        delete cachedBoard[column._id];
+        console.log("FROM CACHE");
 
-      io.to(roomId).emit("board", board);
+        await redis.set(`room:${room._id}`, JSON.stringify(cachedBoard));
+        io.to(roomId).emit("board", cachedBoard);
+      } else {
+        const board = await getBoard(room._id);
+        await redis.set(`room:${room._id}`, JSON.stringify(board));
+        io.to(roomId).emit("board", board);
+      }
     } catch (err) {
       socket.emit("error", "Error deleting task.");
     }

@@ -28,7 +28,7 @@ const redis = new Redis({
   password: REDIS_PASS,
 });
 
-app.use(cors({ origin: CLIENT }));
+app.use(cors({ origin: [CLIENT1, CLIENT2] }));
 app.use(expressc.json());
 
 const io = new Server(server, {

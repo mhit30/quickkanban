@@ -6,7 +6,7 @@ function Task({ taskId, title, user, onDelete, columnId }) {
   const handleDragStart = (e) => {
     e.dataTransfer.setData(
       "text/plain",
-      JSON.stringify({ taskId, fromColumn: columnId })
+      JSON.stringify({ taskId: taskId, fromColumn: columnId })
     );
     setIsDragging(true);
   };

@@ -1,4 +1,4 @@
-const { Room, Column, Task } = require("./models/Board");
+const { Column, Task } = require("../models/Board");
 
 async function getBoard(roomId) {
   // get all the columns and tasks for this room
@@ -17,7 +17,6 @@ async function getBoard(roomId) {
       ),
     };
   }
-
   return board;
 }
 

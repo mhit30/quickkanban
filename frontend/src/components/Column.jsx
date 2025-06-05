@@ -55,16 +55,18 @@ function Column({
           <HiTrash />
         </Button>
       </Flex>
-      {tasks.map((task) => (
-        <Task
-          key={task._id}
-          taskId={task._id}
-          columnId={columnId}
-          title={task.title}
-          user={task.user}
-          onDelete={() => onDeleteTask(task._id)}
-        />
-      ))}
+      {tasks.map((task) => {
+        return (
+          <Task
+            key={task._id}
+            taskId={task._id}
+            columnId={columnId}
+            title={task.title}
+            user={task.user}
+            onDelete={() => onDeleteTask(task._id)}
+          />
+        );
+      })}
       <Flex p={2} m={2} gap={2}>
         <Input
           flex="1"

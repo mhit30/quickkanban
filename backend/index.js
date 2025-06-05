@@ -274,7 +274,7 @@ io.on("connection", async (socket) => {
     } catch (err) {
       socket.emit("error", "Error deleting task.");
     } finally {
-      console.endTime("deleteColumnTime");
+      console.timeEnd("deleteColumnTime");
     }
   });
   socket.on("cursor-move", ({ x, y, username, roomId }) => {

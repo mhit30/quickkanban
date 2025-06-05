@@ -29,7 +29,7 @@ const redis = new Redis({
 });
 
 app.use(cors({ origin: [CLIENT1, CLIENT2] }));
-app.use(expressc.json());
+app.use(express.json());
 
 const io = new Server(server, {
   cors: {

@@ -10,14 +10,22 @@ const Redis = require("ioredis");
 // My imports
 const { Room, Column, Task } = require("./models/Board");
 const { getBoard } = require("./utils/getBoard");
-const redis = new Redis();
 const app = express();
 const server = http.createServer(app);
 
-prod = false;
+prod = true;
 CLIENT = prod ? process.env.CLIENT_URL_PROD : process.env.CLIENT_URL;
 PORT = prod ? process.env.PORT : 5001;
 MONGO_URI = prod ? process.env.MONGO_URI_PROD : process.env.MONGO_URI;
+REDIS_HOST = prod ? process.env.REDIS_HOST : "127.0.0.1";
+REDIS_PORT = prod ? process.env.REDIS_PORT : 6379;
+REDIS_PASS = prod ? process.env.REDIS_PASS : null;
+
+const redis = new Redis({
+  host: REDIS_HOST,
+  port: REDIS_PORT,
+  password: REDIS_PASS,
+});
 
 app.use(cors({ origin: CLIENT }));
 app.use(express.json());

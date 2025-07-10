@@ -1,4 +1,3 @@
-import uvicorn
 from faiss_index import FaissIndex
 from fastapi import FastAPI
 from pydantic import BaseModel

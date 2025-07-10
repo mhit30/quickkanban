@@ -11,11 +11,15 @@ DIM = 384
 class FaissIndex:
     def __init__(self, index_name="index.faiss"):
         self.path = os.path.join(os.path.dirname(__file__), "../../data", index_name)
+        self.index = self.refresh_file()
+
+    def refresh_file(self):
         self.index = faiss.read_index(self.path) if os.path.exists(self.path) else None
         if self.index == None:
             raise Exception("No faiss index found.")
 
     def retrieve_nearest_k(self, query_embedding: np.ndarray, top_k: int):
+        self.refresh_file()
         D, I = self.index.search(query_embedding, top_k)
         # interact with Redis to send back the actual MongoID
         vector_ids = I[0]

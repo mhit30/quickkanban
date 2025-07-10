@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { boardControllers } from "../controllers/boardController";
-
+import boardControllers from "../controllers/boardController.mjs";
 const boardRouter = Router();
 
 boardRouter.get("/:id", boardControllers.getBoard);

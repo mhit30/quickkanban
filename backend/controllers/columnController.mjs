@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 
-import { Column, Task } from "../models/Board";
+import { Column, Task } from "../models/Board.mjs";
 import {
   ColumnSchema,
   ColumnUpdateSchema,
-} from "../validators/columnValidators";
+} from "../validators/columnValidators.mjs";
 const getColumn = async (req, res) => {
   const columnId = req.params.id;
   if (!mongoose.Types.ObjectId.isValid(columnId)) {
@@ -96,9 +96,11 @@ const deleteColumn = async (req, res) => {
   }
 };
 
-export const columnControllers = {
+const columnControllers = {
   getColumn,
   createColumn,
   updateColumn,
   deleteColumn,
 };
+
+export default columnControllers;

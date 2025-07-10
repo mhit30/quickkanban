@@ -1,6 +1,6 @@
-const { Column, Task } = require("../models/Board");
+import { Column, Task } from "../models/Board.mjs";
 
-async function getBoard(boardId) {
+export async function getBoard(boardId) {
   // get all the columns and tasks for this room
   const columns = await Column.find({ boardId: boardId });
   const tasks = await Task.find({ boardId: boardId }).sort({
@@ -19,5 +19,3 @@ async function getBoard(boardId) {
   }
   return board;
 }
-
-module.exports = { getBoard };

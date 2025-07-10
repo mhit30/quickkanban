@@ -3,9 +3,9 @@ import cors from "cors";
 import mongoose from "mongoose";
 import "dotenv/config";
 
-import boardRouter from "./routes/boardRoutes.js";
-import taskRouter from "./routes/taskRouter.js";
-import columnRouter from "./routes/columnRouter.js";
+import boardRouter from "./routes/boardRoutes.mjs";
+import taskRouter from "./routes/taskRouter.mjs";
+import columnRouter from "./routes/columnRouter.mjs";
 
 const app = express();
 

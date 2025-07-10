@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
-
-import { Task } from "../models/Board";
+import { Task } from "../models/Board.mjs";
 import { TaskSchema, TaskUpdateSchema } from "../validators/taskValidator.mjs";
 
 const getTask = async (req, res) => {
@@ -31,8 +30,19 @@ const createTask = async (req, res) => {
   try {
     const task = await Task.create(result.data);
 
-    res.status(201).json({ success: true, taskId: task._id });
+    // fire to embedder
+    const embedPostBody = {
+      task: task.title,
+      taskId: task._id,
+    };
+    await fetch("http://localhost:8001", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(embedPostBody),
+    });
+    res.status(201).json({ success: true, taskId: task._id.toString() });
   } catch (err) {
+    console.log(err);
     return res
       .status(500)
       .json({ success: false, message: "Internal server error" });

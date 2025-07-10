@@ -1,7 +1,10 @@
 import mongoose from "mongoose";
-import { Board } from "../models/Board";
-import { getBoard as getMyBoard } from "../utils/getBoard";
-import { BoardSchema, BoardUpdateSchema } from "../validators/boardValidators";
+import { Board } from "../models/Board.mjs";
+import { getBoard as getMyBoard } from "../utils/getBoard.mjs";
+import {
+  BoardSchema,
+  BoardUpdateSchema,
+} from "../validators/boardValidators.mjs";
 
 const getBoard = async (req, res) => {
   const boardId = req.params.id;
@@ -94,9 +97,11 @@ const deleteBoard = async (req, res) => {
   }
 };
 
-export const boardControllers = {
+const boardControllers = {
   getBoard,
   createBoard,
   updateBoard,
   deleteBoard,
 };
+
+export default boardControllers;

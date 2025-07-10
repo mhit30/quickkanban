@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { columnControllers } from "../controllers/columnController";
-
+import columnControllers from "../controllers/columnController.mjs";
 const columnRouter = Router();
 
 columnRouter.get("/:id", columnControllers.getColumn);

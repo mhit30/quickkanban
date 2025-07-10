@@ -1,10 +1,10 @@
 const { Column, Task } = require("../models/Board");
 
-async function getBoard(roomId) {
+async function getBoard(boardId) {
   // get all the columns and tasks for this room
-  const columns = await Column.find({ roomId: roomId });
-  const tasks = await Task.find({ room: roomId }).sort({
-    createdAt: 1,
+  const columns = await Column.find({ boardId: boardId });
+  const tasks = await Task.find({ boardId: boardId }).sort({
+    updatedAt: 1,
   });
 
   const board = {};

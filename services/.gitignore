@@ -1,0 +1,4 @@
+# Faiss
+*.faiss
+
+/data

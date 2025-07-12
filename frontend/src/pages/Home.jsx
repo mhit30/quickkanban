@@ -1,70 +1,98 @@
 import {
-  HStack,
   VStack,
   Input,
   Button,
   Text,
   Flex,
   Box,
+  HStack,
 } from "@chakra-ui/react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import io from "socket.io-client";
 import { keyframes } from "@emotion/react";
-// my imports
 import Column from "../components/Column";
+import AICopilotPanel from "@/components/AICopilotPanel";
 
-const apiURL = import.meta.env.VITE_API_URL;
+const apiURL = import.meta.env.VITE_API_URL_PROD;
 
-const bounce = keyframes`0%, 100% {transform: translateY(0)}
-                        50% {transform: translateY(-3px); }`;
+const bounce = keyframes`0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); }`;
+
 function Home() {
   const socketRef = useRef(null);
-  const roomIdRef = useRef("");
-  const usernameRef = useRef("");
   const [board, setBoard] = useState(null);
   const [username, setUsername] = useState("");
-  const [roomId, setRoomId] = useState("");
-  const [hasJoined, setHasJoined] = useState(false);
+  const [boardInput, setBoardInput] = useState("");
+  const [boardId, setBoardId] = useState("");
   const [error, setError] = useState("");
-
-  const [newColumnName, setNewColumnName] = useState("");
+  const [hasJoined, setHasJoined] = useState(false);
   const [users, setUsers] = useState([]);
   const [cursors, setCursors] = useState({});
+  const [mode, setMode] = useState("join");
+  const [newColumnName, setNewColumnName] = useState("");
 
-  const handleJoin = () => {
-    const socket = io(`${apiURL}`, {
-      autoConnect: false,
-      auth: { username, roomId },
-    });
-    roomIdRef.current = roomId;
-    usernameRef.current = username;
-    socketRef.current = socket;
-    socket.on("connect_error", (err) => {
+  const handleJoin = async () => {
+    if (!boardInput.trim()) {
+      setError("Please enter a board ID or slug.");
+      return;
+    }
+    try {
+      const res = await fetch(`${apiURL}/boards/${boardInput}`);
+      const data = await res.json();
+      if (!data.success || data.board?._id === null)
+        throw new Error("Board not found");
+
+      const socket = io(apiURL, {
+        autoConnect: false,
+        auth: { username, boardId: data.board._id },
+      });
+
+      socketRef.current = socket;
+      setBoardId(data.board._id);
+
+      socket.on("connect", () => {
+        socket.emit("board:join", { boardId: data.board._id, username });
+        setBoard(data.board);
+        setHasJoined(true);
+      });
+
+      socket.connect();
+    } catch (err) {
+      console.log(err);
       setError(err.message);
-    });
-
-    socket.on("error", (err) => {
-      setError(err);
-    });
-    socket.on("board", (initialBoard) => {
-      setBoard(initialBoard);
-      setHasJoined(true);
-      setUsername("");
-      setRoomId("");
-      setError("");
-    });
-
-    socket.on("users", (allUsers) => {
-      setUsers(allUsers);
-    });
-    socket.connect(); // only connect after our listeners are set, thus firing listening only after connection set
+    }
   };
 
-  const handleCreateNewColumn = () => {
-    socketRef.current.emit("createColumn", {
-      newColumnName: newColumnName,
-      roomId: roomIdRef.current,
-    });
+  const handleCreateBoard = async () => {
+    try {
+      const res = await fetch(`${apiURL}/boards/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ boardTitle: boardInput }),
+      });
+      const data = await res.json();
+      if (!data.success && res.status === 409) {
+        throw new Error("Board already exists");
+      }
+      if (!data.success || !data.board?._id)
+        throw new Error("Board creation failed");
+
+      await handleJoin();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleCreateNewColumn = async (e) => {
+    e.preventDefault();
+    try {
+      await fetch(`${apiURL}/columns/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ boardId: boardId, columnTitle: newColumnName }),
+      });
+    } catch (err) {
+      setError(err);
+    }
     setNewColumnName("");
   };
 
@@ -72,174 +100,313 @@ function Home() {
     const socket = socketRef.current;
     if (!socket) return;
 
+    const handleConnectError = (err) => setError(err.message);
+    const handleError = (err) => setError(err);
+    const handleBoard = (boardData) => {
+      setBoard(boardData);
+      setHasJoined(true);
+      setError("");
+    };
+    const handleUsers = (allUsers) => {
+      setUsers(allUsers);
+    };
+    const handleCursorUpdate = ({ username: uname, x, y }) => {
+      if (uname !== username) {
+        setCursors((prev) => ({ ...prev, [uname]: { x, y } }));
+      }
+    };
     const handleMouseMove = (e) => {
       socket.emit("cursor-move", {
         x: e.clientX,
         y: e.clientY,
-        username: usernameRef.current,
-        roomId: roomIdRef.current,
+        username,
       });
     };
 
-    const handleCursorUpdate = ({ username, x, y }) => {
-      if (username != usernameRef.current) {
-        setCursors((prev) => {
-          return {
-            ...prev,
-            [username]: { x, y },
-          };
-        });
-      }
-    };
-
+    socket.on("connect_error", handleConnectError);
+    socket.on("error", handleError);
+    socket.on("board", handleBoard);
+    socket.on("users", handleUsers);
+    socket.on("cursor-update", handleCursorUpdate);
     window.addEventListener("mousemove", handleMouseMove);
-    socketRef.current.on("cursor-update", handleCursorUpdate);
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.off("board");
-        socketRef.current.off("cursor-update");
-        window.removeEventListener("mousemove", handleMouseMove);
-      }
+      socket.off("connect_error", handleConnectError);
+      socket.off("error", handleError);
+      socket.off("board", handleBoard);
+      socket.off("users", handleUsers);
+      socket.off("cursor-update", handleCursorUpdate);
+      window.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [hasJoined]);
+  }, [hasJoined, username, boardId]);
 
   return (
-    <>
-      {!hasJoined ? (
-        <Flex height="100vh" widht="100vh" align="center" justify="center">
-          <VStack spacing={4} align="stretch" w="300px">
-            <Flex justify="center" align="center">
-              <VStack>
-                <Text fontSize="3xl" fontWeight="black">
-                  QuickKanban
-                </Text>
-                <Text fontSize="md" fontWeight="medium" color="gray.500">
-                  Build a high level task board in seconds!
-                </Text>
-              </VStack>
-            </Flex>
-            <Text fontSize="2xl" fontWeight="bold">
-              Create or Join A Room
-            </Text>
-            <Input
-              placeholder="Enter a username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-            <Input
-              placeholder="Enter a new or existing room ID"
-              value={roomId}
-              onChange={(e) => setRoomId(e.target.value)}
-            />
-            <Button onClick={handleJoin} colorScheme="blue">
-              Join Room
-            </Button>
-            {error && <Text color="red.500">{error}</Text>}
-          </VStack>
-        </Flex>
-      ) : board ? (
-        <Flex direction="column" p={4} m={4}>
-          <HStack m={2}>
-            <Text fontWeight="semibold">Room ID: {roomIdRef.current}</Text>
-            <Box
-              w="10px"
-              h="10px"
-              borderRadius="full"
-              bg="green.400"
-              animation={`${bounce} 1s infinite`}
-            />
-            <Text fontWeight="semibold">Live Users: </Text>
-            {users.map((username, index) => {
-              return <Text key={index}>{username}</Text>;
-            })}
-          </HStack>
-          <HStack m={2}>{error && <Text color="red.500">{error}</Text>}</HStack>
-          <HStack gap={2} m={4}>
-            <Input
-              placeholder="Create new column"
-              value={newColumnName}
-              onChange={(e) => setNewColumnName(e.target.value)}
-            />
-            <Button onClick={handleCreateNewColumn}>Add Column</Button>
-            <Button
-              onClick={() => {
-                socketRef.current?.disconnect();
-                socketRef.current = null;
-                setHasJoined(false);
-                setBoard(null);
-              }}
-              backgroundColor="red.500"
-            >
-              Leave Room
-            </Button>
-          </HStack>
+    <Flex direction="column" minH="100vh" bg="gray.50">
+      {hasJoined && (
+        <Box
+          position="sticky"
+          top="0"
+          zIndex={20}
+          bg="gray.50"
+          px={4}
+          py={3}
+          borderBottom="1px solid"
+          borderColor="gray.200"
+        >
+          <Flex
+            direction={{ base: "column", md: "row" }}
+            align="center"
+            justify="space-between"
+            gap={3}
+            wrap="wrap"
+          >
+            <HStack spacing={3} align="center">
+              <Text fontWeight="semibold">Room ID: {boardInput}</Text>
+              <Box
+                w="10px"
+                h="10px"
+                borderRadius="full"
+                bg="green.400"
+                animation={`${bounce} 1s infinite`}
+              />
+              <Text fontWeight="semibold">Live Users:</Text>
+              {users.map((u, i) => (
+                <Text key={i}>{u}</Text>
+              ))}
+            </HStack>
+            <HStack spacing={2} w={{ base: "full", md: "auto" }}>
+              <form
+                onSubmit={handleCreateNewColumn}
+                style={{ display: "flex", gap: "0.5rem" }}
+              >
+                <Input
+                  size="sm"
+                  placeholder="Create new column"
+                  value={newColumnName}
+                  onChange={(e) => setNewColumnName(e.target.value)}
+                />
+                <Button size="sm" type="submit" colorScheme="blackAlpha">
+                  Add Column
+                </Button>
+              </form>
 
-          <HStack align="start" spacing={4}>
-            {Object.entries(board).map(([columnId, column]) => {
-              return (
+              <Button
+                size="sm"
+                colorScheme="red"
+                onClick={() => {
+                  socketRef.current?.disconnect();
+                  socketRef.current = null;
+                  setBoard(null);
+                  setHasJoined(false);
+                  setBoardId("");
+                  setCursors({});
+                  setUsers([]);
+                }}
+              >
+                Leave
+              </Button>
+            </HStack>
+          </Flex>
+        </Box>
+      )}
+
+      {!hasJoined ? (
+        <VStack spacing={4} w="full" maxW="320px" mx="auto" mt={12}>
+          <Text fontSize="3xl" fontWeight="bold">
+            QuickKanban
+          </Text>
+          <Text fontSize="md" color="gray.500">
+            Create or Join a Board
+          </Text>
+          <HStack w="full" spacing={2}>
+            <Button
+              flex={1}
+              size="sm"
+              variant={mode === "join" ? "solid" : "outline"}
+              onClick={() => setMode("join")}
+            >
+              Join
+            </Button>
+            <Button
+              flex={1}
+              size="sm"
+              variant={mode === "create" ? "solid" : "outline"}
+              onClick={() => setMode("create")}
+            >
+              Create
+            </Button>
+          </HStack>
+          <Input
+            size="sm"
+            placeholder="Enter your username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <Input
+            size="sm"
+            placeholder="Enter board name"
+            value={boardInput}
+            onChange={(e) => setBoardInput(e.target.value)}
+          />
+          <Button
+            size="sm"
+            onClick={mode === "join" ? handleJoin : handleCreateBoard}
+            colorScheme="blackAlpha"
+            w="full"
+          >
+            {mode === "join" ? "Join Board" : "Create Board"}
+          </Button>
+          {error && (
+            <Text color="red.500" fontSize="sm">
+              {error}
+            </Text>
+          )}
+        </VStack>
+      ) : (
+        <Flex direction="row" w="full" flex={1}>
+          <Box flex="1" overflowX="auto" p={4} pb={{ base: "45vh", md: 4 }}>
+            <Flex wrap="wrap" gap={4} align="start">
+              {board.columns.map((col) => (
                 <Column
-                  key={columnId}
-                  columnId={columnId}
-                  title={column.title}
-                  tasks={column.tasks}
-                  onAddTask={(newTaskTitle) => {
-                    socketRef.current.emit("addTask", {
-                      roomId: roomIdRef.current,
-                      columnId: columnId,
-                      title: newTaskTitle,
-                      user: usernameRef.current,
+                  key={col._id}
+                  columnId={col._id}
+                  title={col.title}
+                  tasks={col.tasks}
+                  handleUpdateColumn={async ({ columnTitle, columnId }) => {
+                    await fetch(`${apiURL}/columns/${columnId}`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ columnTitle, boardId }),
                     });
                   }}
-                  onDeleteTask={(taskId) => {
-                    socketRef.current.emit("deleteTask", {
-                      roomId: roomIdRef.current,
-                      columnId: columnId,
-                      taskId: taskId,
+                  onAddTask={async ({
+                    title,
+                    description,
+                    priority,
+                    labels,
+                  }) => {
+                    await fetch(`${apiURL}/tasks/`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        title,
+                        description,
+                        priority: priority === "" ? undefined : priority,
+                        labels,
+                        user: username,
+                        columnId: col._id,
+                        boardId,
+                      }),
                     });
                   }}
-                  onMoveTask={(fromCol, toCol, taskId) => {
-                    socketRef.current.emit("moveTask", {
-                      roomId: roomIdRef.current,
-                      taskId: taskId,
-                      fromColumnId: fromCol,
-                      toColumnId: toCol,
+                  onDeleteTask={async (taskId) => {
+                    await fetch(`${apiURL}/tasks/${taskId}`, {
+                      method: "DELETE",
+                      headers: { "Content-Type": "application/json" },
                     });
                   }}
-                  onDeleteColumn={(columnId) => {
-                    socketRef.current.emit("deleteColumn", {
-                      roomId: roomIdRef.current,
-                      columnId: columnId,
+                  onMoveTask={async (toCol, taskId) => {
+                    await fetch(`${apiURL}/tasks/${taskId}`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        boardId: boardId,
+                        columnId: toCol,
+                      }),
+                    });
+                  }}
+                  onDeleteColumn={async () => {
+                    await fetch(`${apiURL}/columns/${col._id}`, {
+                      method: "DELETE",
+                      headers: { "Content-Type": "application/json" },
+                    });
+                  }}
+                  onTaskUpdate={async ({
+                    taskId,
+                    title,
+                    description,
+                    priority,
+                    labels,
+                  }) => {
+                    await fetch(`${apiURL}/tasks/${taskId}`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        title,
+                        description,
+                        priority: priority === "" ? undefined : priority,
+                        labels,
+                        columnId: col._id,
+                        boardId: boardId,
+                      }),
                     });
                   }}
                 />
-              );
-            })}
-          </HStack>
-          {Object.entries(cursors).map(([username, pos]) => (
-            <Box
-              key={username}
-              position="fixed"
-              top={pos.y}
-              left={pos.x}
-              bg="blue.500"
-              color="white"
-              px={2}
-              py={1}
-              fontSize="xs"
-              borderRadius="sm"
-              pointerEvents="none"
-              transform="translate(-50%, -100%)"
-              zIndex={9999}
-            >
-              {username}
-            </Box>
-          ))}
+              ))}
+            </Flex>
+          </Box>
+
+          <AICopilotPanel
+            onSendQuery={async (
+              query,
+              handleStreamUpdate,
+              handleStreaming,
+              handleLoading
+            ) => {
+              handleLoading(true);
+              const res = await fetch(`${apiURL}/query`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  uid: socketRef.current.id,
+                  boardId: boardId,
+                  query: query,
+                }),
+              });
+              handleLoading(false);
+              if (!res.body) {
+                handleStreamUpdate("No stream available");
+                return;
+              }
+              const reader = res.body.getReader();
+              const decoder = new TextDecoder();
+              handleStreaming(true);
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                handleStreamUpdate(chunk);
+              }
+              handleStreaming(false);
+            }}
+          />
         </Flex>
-      ) : (
-        <Text>Loading board...</Text>
       )}
-    </>
+
+      {Object.entries(cursors).map(([uname, pos]) => {
+        if (!users.includes(uname)) return;
+        return (
+          <Box
+            key={uname}
+            position="fixed"
+            top={pos.y}
+            left={pos.x}
+            bg="gray"
+            color="white"
+            px={2}
+            py={1}
+            fontSize="xs"
+            borderRadius="md"
+            pointerEvents="none"
+            transform="translate(-50%, -100%)"
+            zIndex={9999}
+          >
+            {uname}
+          </Box>
+        );
+      })}
+    </Flex>
   );
 }
+
 export default Home;

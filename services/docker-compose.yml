@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  embed-service:
+    build:
+      context: ./embed-service
+    container_name: embed-service
+    ports:
+      - "8001:8001"
+    depends_on:
+      - qdrant
+    environment:
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+
+  retrieve-service:
+    build:
+      context: ./retrieve-service
+    container_name: retrieve-service
+    ports:
+      - "8002:8002"
+    depends_on:
+      - qdrant
+    environment:
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+
+  query-service:
+    build:
+      context: ./query-service
+    container_name: query-service
+    ports:
+      - "8003:8003"
+    depends_on:
+      - qdrant
+    environment:
+      GEMINI_API_KEY: AIzaSyDbeLsuX9SnSDJjPsgFyaOmqvFbwEboRhs
+
+volumes:
+  qdrant_data:

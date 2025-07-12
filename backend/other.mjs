@@ -1,36 +1,3 @@
-require("dotenv").config();
-
-const express = require("express");
-const http = require("http");
-const cors = require("cors");
-const { Server } = require("socket.io");
-const mongoose = require("mongoose");
-const Redis = require("ioredis");
-
-// My imports
-const { Room, Column, Task } = require("./models/Board");
-const { getBoard } = require("./utils/getBoard");
-const app = express();
-const server = http.createServer(app);
-
-prod = true;
-CLIENT1 = prod ? process.env.CLIENT_URL_PROD1 : process.env.CLIENT_URL;
-CLIENT2 = prod ? process.env.CLIENT_URL_PROD2 : null;
-PORT = prod ? process.env.PORT : 5001;
-MONGO_URI = prod ? process.env.MONGO_URI_PROD : process.env.MONGO_URI;
-REDIS_HOST = prod ? process.env.REDIS_HOST : "127.0.0.1";
-REDIS_PORT = prod ? process.env.REDIS_PORT : 6379;
-REDIS_PASS = prod ? process.env.REDIS_PASS : null;
-
-const redis = new Redis({
-  host: REDIS_HOST,
-  port: REDIS_PORT,
-  password: REDIS_PASS,
-});
-
-app.use(cors({ origin: [CLIENT1, CLIENT2] }));
-app.use(express.json());
-
 const io = new Server(server, {
   cors: {
     origin: [CLIENT1, CLIENT2],
@@ -71,7 +38,6 @@ io.on("connection", async (socket) => {
   let room = await Room.findOne({ roomId: socket.roomId });
   if (!room) {
     room = await Room.create({ roomId: socket.roomId });
-    console.log(`New Room Created With Id: ${socket.roomId}`);
   }
 
   // emit the username of new user
@@ -266,12 +232,5 @@ io.on("connection", async (socket) => {
     const users = groupSocket.map((socket) => socket.username);
     io.to(socket.roomId).emit("users", users);
     console.log(`${socket.username} disconnected from room ${socket.roomId}`);
-  });
-});
-
-mongoose.connect(MONGO_URI).then(() => {
-  console.log("MongoDB connected");
-  server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
   });
 });

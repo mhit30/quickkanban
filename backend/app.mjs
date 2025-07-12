@@ -10,7 +10,7 @@ import redis_client from "./services/redis-client.mjs";
 import queryRouter from "./routes/queryRouter.mjs";
 const app = express();
 
-const prod = false;
+const prod = true;
 const CLIENT1 = prod ? process.env.CLIENT_URL_PROD1 : process.env.CLIENT_URL;
 const CLIENT2 = prod ? process.env.CLIENT_URL_PROD2 : null;
 const MONGO_URI = prod ? process.env.MONGO_URI_PROD : process.env.MONGO_URI;

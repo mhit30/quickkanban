@@ -1,6 +1,6 @@
 {
   "family": "quickkanban-task",
-  "executionRoleArn": "",
+  "executionRoleArn": "arn:aws:iam::582049327707:role/ecsTaskExecutionRole",
   "networkMode": "bridge",
   "requiresCompatibilities": ["EC2"],
   "volumes": [
@@ -14,9 +14,9 @@
   "containerDefinitions": [
     {
       "name": "nginx",
-      "image": "",
-      "memory": 128,
-      "cpu": 64,
+      "image": "582049327707.dkr.ecr.us-east-1.amazonaws.com/my-nginx",
+      "memory": 64,
+      "cpu": 32,
       "essential": true,
       "portMappings": [
         {
@@ -47,9 +47,9 @@
     },
     {
       "name": "backend",
-      "image": "",
-      "memory": 512,
-      "memoryReservation": 256,
+      "image": "582049327707.dkr.ecr.us-east-1.amazonaws.com/my-backend",
+      "memory": 192,
+      "memoryReservation": 128,
       "cpu": 128,
       "essential": true,
       "portMappings": [
@@ -58,15 +58,15 @@
           "hostPort": 0
         }
       ],
-      "links": ["redis"],
+      "links": ["redis", "embed-service", "query-service"],
       "secrets": [
         {
           "name": "MONGO_URI_PROD",
-          "valueFrom": ""
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:mongo_uri_prod"
         },
         {
           "name": "REDIS_PASS",
-          "valueFrom": ""
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:redis-password"
         }
       ],
       "environment": [
@@ -85,6 +85,14 @@
         {
           "name": "CLIENT_URL_PROD2",
           "value": "https://quickkanban.xyz"
+        },
+        {
+          "name": "EMBED_SERVICE_URL",
+          "value": "http://query-service:8001"
+        },
+        {
+          "name": "QUERY_SERVICE_URL",
+          "value": "http://query-service:8003"
         }
       ],
       "logConfiguration": {
@@ -99,8 +107,8 @@
     {
       "name": "redis",
       "image": "redis:latest",
-      "memory": 256,
-      "memoryReservation": 128,
+      "memory": 64,
+      "memoryReservation": 32,
       "cpu": 64,
       "essential": true,
       "portMappings": [
@@ -109,10 +117,20 @@
           "hostPort": 0
         }
       ],
+      "environment": [
+        {
+          "name": "REDIS_HOST",
+          "value": "redis"
+        },
+        {
+          "name": "REDIS_PORT",
+          "value": "6379"
+        }
+      ],
       "secrets": [
         {
           "name": "REDIS_PASS",
-          "valueFrom": ""
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:redis-password"
         }
       ],
       "logConfiguration": {
@@ -124,6 +142,130 @@
         }
       },
       "command": ["sh", "-c", "exec redis-server --requirepass \"$REDIS_PASS\""]
+    },
+    {
+      "name": "embed-service",
+      "image": "582049327707.dkr.ecr.us-east-1.amazonaws.com/my-embed-service:latest",
+      "cpu": 128,
+      "memory": 256,
+      "memoryReservation": 128,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8001,
+          "hostPort": 0
+        }
+      ],
+
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/quickkanban",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "embed"
+        }
+      },
+      "secrets": [
+        {
+          "name": "GEMINI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:gemini_api_key"
+        },
+        {
+          "name": "QDRANT_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:qdrant_api"
+        },
+        {
+          "name": "QDRANT_URL_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:qdrant_url_key"
+        }
+      ]
+    },
+    {
+      "name": "retrieve-service",
+      "image": "582049327707.dkr.ecr.us-east-1.amazonaws.com/my-retrieve-service:latest",
+      "memory": 256,
+      "memoryReservation": 128,
+      "cpu": 128,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8002,
+          "hostPort": 0
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/quickkanban",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "retrieve"
+        }
+      },
+      "secrets": [
+        {
+          "name": "GEMINI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:gemini_api_key"
+        },
+        {
+          "name": "QDRANT_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:qdrant_api"
+        },
+        {
+          "name": "QDRANT_URL_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:qdrant_url_key"
+        }
+      ]
+    },
+    {
+      "name": "query-service",
+      "image": "582049327707.dkr.ecr.us-east-1.amazonaws.com/my-query-service:latest",
+      "memory": 192,
+      "memoryReservation": 128,
+      "cpu": 128,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8003,
+          "hostPort": 0
+        }
+      ],
+      "links": ["retrieve-service"],
+      "secrets": [
+        {
+          "name": "GEMINI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:gemini_api_key"
+        },
+        {
+          "name": "MONGO_URI",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:mongo_uri_prod"
+        },
+        {
+          "name": "REDIS_PASS",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:redis-password"
+        }
+      ],
+      "environment": [
+        {
+          "name": "REDIS_HOST",
+          "value": "redis"
+        },
+        {
+          "name": "REDIS_PORT",
+          "value": "6379"
+        },
+        {
+          "name": "RETRIEVE_SERVICE_URL",
+          "value": "http://retrieve-service:8002"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/quickkanban",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "query"
+        }
+      }
     }
   ]
 }

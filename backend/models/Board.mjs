@@ -6,6 +6,11 @@ const BoardSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+    },
   },
   { timestamps: true }
 );
@@ -23,6 +28,7 @@ const ColumnSchema = new mongoose.Schema(
 
 const TaskSchema = new mongoose.Schema(
   {
+    taskId: { type: Number, required: false, unique: true },
     title: { type: String, required: true },
     description: { type: String, required: false },
     createdAt: {
@@ -31,11 +37,10 @@ const TaskSchema = new mongoose.Schema(
     },
     priority: {
       type: String,
-      enum: ["low", "med", "high"],
+      enum: ["low", "medium", "high"],
     },
     labels: {
-      type: String,
-      enum: ["frontend", "backend"],
+      type: [String],
     },
     isFinished: {
       type: Boolean,
@@ -55,6 +60,22 @@ const TaskSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+TaskSchema.pre("save", async function (next) {
+  if (this.taskId) return next();
+
+  let unique = false;
+  while (!unique) {
+    const candidate = Math.floor(100000 + Math.random() * 900000);
+    const existing = await this.constructor.findOne({ taskId: candidate });
+    if (!existing) {
+      this.taskId = candidate;
+      unique = true;
+    }
+  }
+
+  next();
+});
 
 export const Board =
   mongoose.models.board || mongoose.model("board", BoardSchema);

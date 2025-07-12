@@ -38,7 +38,6 @@ io.on("connection", async (socket) => {
   let room = await Room.findOne({ roomId: socket.roomId });
   if (!room) {
     room = await Room.create({ roomId: socket.roomId });
-    console.log(`New Room Created With Id: ${socket.roomId}`);
   }
 
   // emit the username of new user

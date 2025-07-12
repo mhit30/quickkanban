@@ -1,21 +1,20 @@
 import { Column, Task } from "../models/Board.mjs";
 
 export async function getBoard(boardId) {
-  // get all the columns and tasks for this room
-  const columns = await Column.find({ boardId: boardId });
-  const tasks = await Task.find({ boardId: boardId }).sort({
-    updatedAt: 1,
-  });
+  try {
+    const columns = await Column.find({ boardId });
+    const tasks = await Task.find({ boardId }).sort({ updatedAt: 1 });
 
-  const board = {};
-
-  for (const col of columns) {
-    board[col._id] = {
-      title: col.name,
+    const mapped = columns.map((col) => ({
+      _id: col._id,
+      title: col.columnTitle,
       tasks: tasks.filter(
-        (task) => task.column.toString() === col._id.toString() // get all the tasks associated with that specific column (col)
+        (task) => task.columnId.toString() === col._id.toString()
       ),
-    };
+    }));
+
+    return { _id: boardId, columns: mapped };
+  } catch (err) {
+    console.log(err);
   }
-  return board;
 }

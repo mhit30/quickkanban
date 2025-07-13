@@ -188,17 +188,15 @@ function Home() {
               ))}
             </HStack>
             <Flex
-              w="full"
-              align="center"
-              justify="space-between"
               gap={2}
-              wrap="nowrap"
+              wrap="wrap"
+              align="center"
+              justify="flex-end"
+              w="full"
             >
-              <ColorModeButton />
-
               <form
                 onSubmit={handleCreateNewColumn}
-                style={{ display: "flex", gap: "0.5rem", flexGrow: 1 }}
+                style={{ display: "flex", gap: "0.5rem" }}
               >
                 <Input
                   size="sm"
@@ -242,6 +240,7 @@ function Home() {
               >
                 Leave
               </Button>
+              <ColorModeButton />
             </Flex>
           </Flex>
         </Box>

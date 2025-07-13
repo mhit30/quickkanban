@@ -188,17 +188,17 @@ function Home() {
               ))}
             </HStack>
             <Flex
-              gap={2}
-              wrap="wrap"
+              w="full"
               align="center"
               justify="space-between"
-              w="full"
+              gap={2}
+              wrap="nowrap"
             >
               <ColorModeButton />
 
               <form
                 onSubmit={handleCreateNewColumn}
-                style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
+                style={{ display: "flex", gap: "0.5rem", flexGrow: 1 }}
               >
                 <Input
                   size="sm"

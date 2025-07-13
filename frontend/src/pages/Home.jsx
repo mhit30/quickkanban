@@ -12,6 +12,7 @@ import io from "socket.io-client";
 import { keyframes } from "@emotion/react";
 import Column from "../components/Column";
 import AICopilotPanel from "@/components/AICopilotPanel";
+import { ColorModeButton } from "@/components/ui/color-mode";
 
 const apiURL = import.meta.env.VITE_API_URL_PROD;
 
@@ -24,7 +25,7 @@ function Home() {
   const [boardInput, setBoardInput] = useState("");
   const [boardId, setBoardId] = useState("");
   const [error, setError] = useState("");
-  const [hasJoined, setHasJoined] = useState(false);
+  const [hasJoined, setHasJoined] = useState(true);
   const [users, setUsers] = useState([]);
   const [cursors, setCursors] = useState({});
   const [mode, setMode] = useState("join");
@@ -141,13 +142,19 @@ function Home() {
   }, [hasJoined, username, boardId]);
 
   return (
-    <Flex direction="column" minH="100vh" bg="gray.50">
+    <Flex
+      direction="column"
+      minH="100vh"
+      bg="gray.50"
+      _dark={{ bg: "gray.900" }}
+    >
       {hasJoined && (
         <Box
           position="sticky"
           top="0"
           zIndex={20}
           bg="gray.50"
+          _dark={{ bg: "gray.900", borderColor: "gray.700" }}
           px={4}
           py={3}
           borderBottom="1px solid"
@@ -161,7 +168,9 @@ function Home() {
             wrap="wrap"
           >
             <HStack spacing={3} align="center">
-              <Text fontWeight="semibold">Room ID: {boardInput}</Text>
+              <Text fontWeight="semibold" _dark={{ color: "gray.100" }}>
+                Room ID: {boardInput}
+              </Text>
               <Box
                 w="10px"
                 h="10px"
@@ -169,9 +178,13 @@ function Home() {
                 bg="green.400"
                 animation={`${bounce} 1s infinite`}
               />
-              <Text fontWeight="semibold">Live Users:</Text>
+              <Text fontWeight="semibold" _dark={{ color: "gray.100" }}>
+                Live Users:
+              </Text>
               {users.map((u, i) => (
-                <Text key={i}>{u}</Text>
+                <Text key={i} _dark={{ color: "gray.200" }}>
+                  {u}
+                </Text>
               ))}
             </HStack>
             <HStack spacing={2} w={{ base: "full", md: "auto" }}>
@@ -184,15 +197,32 @@ function Home() {
                   placeholder="Create new column"
                   value={newColumnName}
                   onChange={(e) => setNewColumnName(e.target.value)}
+                  bg="white"
+                  _dark={{ bg: "gray.700", color: "white" }}
                 />
-                <Button size="sm" type="submit" colorScheme="blackAlpha">
+                <Button
+                  size="sm"
+                  type="submit"
+                  colorScheme="blackAlpha"
+                  _dark={{
+                    bg: "gray.700",
+                    color: "white",
+                    _hover: { bg: "gray.600" },
+                  }}
+                >
                   Add Column
                 </Button>
               </form>
+              <ColorModeButton />
 
               <Button
                 size="sm"
                 colorScheme="red"
+                _dark={{
+                  bg: "red.500",
+                  color: "white",
+                  _hover: { bg: "red.400" },
+                }}
                 onClick={() => {
                   socketRef.current?.disconnect();
                   socketRef.current = null;
@@ -212,10 +242,10 @@ function Home() {
 
       {!hasJoined ? (
         <VStack spacing={4} w="full" maxW="320px" mx="auto" mt={12}>
-          <Text fontSize="3xl" fontWeight="bold">
+          <Text fontSize="3xl" fontWeight="bold" _dark={{ color: "white" }}>
             QuickKanban
           </Text>
-          <Text fontSize="md" color="gray.500">
+          <Text fontSize="md" color="gray.500" _dark={{ color: "gray.400" }}>
             Create or Join a Board
           </Text>
           <HStack w="full" spacing={2}>
@@ -241,18 +271,27 @@ function Home() {
             placeholder="Enter your username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            bg="white"
+            _dark={{ bg: "gray.800", color: "white" }}
           />
           <Input
             size="sm"
             placeholder="Enter board name"
             value={boardInput}
             onChange={(e) => setBoardInput(e.target.value)}
+            bg="white"
+            _dark={{ bg: "gray.800", color: "white" }}
           />
           <Button
             size="sm"
             onClick={mode === "join" ? handleJoin : handleCreateBoard}
             colorScheme="blackAlpha"
             w="full"
+            _dark={{
+              bg: "gray.700",
+              color: "white",
+              _hover: { bg: "gray.600" },
+            }}
           >
             {mode === "join" ? "Join Board" : "Create Board"}
           </Button>
@@ -264,7 +303,14 @@ function Home() {
         </VStack>
       ) : (
         <Flex direction="row" w="full" flex={1}>
-          <Box flex="1" overflowX="auto" p={4} pb={{ base: "45vh", md: 4 }}>
+          <Box
+            flex="1"
+            overflowX="auto"
+            p={4}
+            pb={{ base: "45vh", md: 4 }}
+            bg="gray.50"
+            _dark={{ bg: "gray.900" }}
+          >
             <Flex wrap="wrap" gap={4} align="start">
               {board.columns.map((col) => (
                 <Column
@@ -390,8 +436,9 @@ function Home() {
             position="fixed"
             top={pos.y}
             left={pos.x}
-            bg="gray"
+            bg="gray.700"
             color="white"
+            _dark={{ bg: "gray.200", color: "black" }}
             px={2}
             py={1}
             fontSize="xs"

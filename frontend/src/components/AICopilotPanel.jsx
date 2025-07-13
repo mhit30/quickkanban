@@ -63,6 +63,10 @@ function AICopilotPanel({ onSendQuery }) {
       borderTop={isMobile ? "1px solid" : "none"}
       borderLeft={isMobile ? "none" : "1px solid"}
       borderColor="gray.200"
+      _dark={{
+        bg: "gray.900",
+        borderColor: "gray.700",
+      }}
       zIndex={10}
       display="flex"
       flexDirection="column"
@@ -72,7 +76,7 @@ function AICopilotPanel({ onSendQuery }) {
           <Text fontSize="xl" fontWeight="bold">
             Kanban Assistant
           </Text>
-          <Text fontSize="sm" color="gray.600">
+          <Text fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>
             Ask for help, summaries, or task ideas.
           </Text>
         </Box>
@@ -85,6 +89,7 @@ function AICopilotPanel({ onSendQuery }) {
         py={2}
         fontSize="sm"
         color="gray.800"
+        _dark={{ color: "gray.100" }}
         whiteSpace="pre-wrap"
       >
         {loading ? (
@@ -106,6 +111,7 @@ function AICopilotPanel({ onSendQuery }) {
         position="sticky"
         bottom={0}
         bg="gray.100"
+        _dark={{ bg: "gray.900", borderColor: "gray.700" }}
         px={4}
         py={3}
         borderTop="1px solid"
@@ -124,12 +130,18 @@ function AICopilotPanel({ onSendQuery }) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Ask something..."
               bg="white"
+              _dark={{ bg: "gray.800", color: "white" }}
             />
             <Button
               size="sm"
               type="submit"
               loading={loading}
               colorPalette="black"
+              _dark={{
+                bg: "gray.700",
+                color: "white",
+                _hover: { bg: "gray.600" },
+              }}
             >
               Send
             </Button>

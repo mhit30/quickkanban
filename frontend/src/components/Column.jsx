@@ -82,6 +82,7 @@ function Column({
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       bg="gray.50"
+      _dark={{ bg: "gray.800", borderColor: "gray.700" }}
       border="1px solid"
       borderColor="gray.200"
       p={3}
@@ -121,6 +122,7 @@ function Column({
             fontWeight="semibold"
             fontSize="md"
             color="black"
+            _dark={{ color: "gray.100" }}
             cursor="pointer"
             onClick={() => {
               setNewTitle(title);
@@ -135,6 +137,7 @@ function Column({
           variant="ghost"
           size="sm"
           colorPalette="black"
+          _dark={{ color: "gray.300", _hover: { bg: "gray.700" } }}
         >
           <HiTrash />
         </Button>
@@ -160,6 +163,7 @@ function Column({
           size="sm"
           variant="ghost"
           colorScheme="black"
+          _dark={{ color: "gray.300", _hover: { bg: "gray.700" } }}
           w="full"
         >
           + Add Task
@@ -170,6 +174,7 @@ function Column({
           spacing={2}
           align="stretch"
           bg="gray.50"
+          _dark={{ bg: "gray.700" }}
           borderRadius="md"
           p={3}
           w="full"
@@ -178,6 +183,7 @@ function Column({
           <Input
             size="sm"
             bg="gray.100"
+            _dark={{ bg: "gray.600", color: "white" }}
             placeholder="Task title"
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
@@ -185,6 +191,7 @@ function Column({
           <Input
             size="sm"
             bg="gray.100"
+            _dark={{ bg: "gray.600", color: "white" }}
             placeholder="Description (optional)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -210,6 +217,7 @@ function Column({
             <Input
               size="sm"
               bg="gray.100"
+              _dark={{ bg: "gray.600", color: "white" }}
               placeholder="Add label"
               value={labelInput}
               onChange={(e) => setLabelInput(e.target.value)}
@@ -237,6 +245,7 @@ function Column({
                   px={2}
                   py={1}
                   bg="gray.300"
+                  _dark={{ bg: "gray.600", color: "white" }}
                   borderRadius="md"
                   fontSize="xs"
                   align="center"
@@ -258,6 +267,11 @@ function Column({
             size="sm"
             variant="solid"
             colorScheme="black"
+            _dark={{
+              bg: "gray.600",
+              color: "white",
+              _hover: { bg: "gray.500" },
+            }}
             w="full"
           >
             Add Task

@@ -86,6 +86,7 @@ function Task({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isEditing]);
+
   return (
     <Flex
       ref={wrapperRef}
@@ -94,6 +95,11 @@ function Task({
       onDragEnd={handleDragEnd}
       p={3}
       bg="gray.100"
+      _dark={{
+        bg: "gray.700",
+        borderColor: "gray.600",
+        _hover: { bg: "gray.600" },
+      }}
       borderRadius="md"
       boxShadow="sm"
       opacity={isDragging ? 0.6 : 1}
@@ -118,12 +124,16 @@ function Task({
                 onChange={(e) => setEditedTitle(e.target.value)}
                 placeholder="Title"
                 autoFocus
+                bg="white"
+                _dark={{ bg: "gray.600", color: "white" }}
               />
               <Input
                 size="xs"
                 value={editedDescription}
                 onChange={(e) => setEditedDescription(e.target.value)}
                 placeholder="Description"
+                bg="white"
+                _dark={{ bg: "gray.600", color: "white" }}
               />
               <Flex gap={2} mt={1}>
                 {["low", "medium", "high"].map((level) => (
@@ -145,6 +155,8 @@ function Task({
                   value={labelInput}
                   onChange={(e) => setLabelInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && addLabel()}
+                  bg="white"
+                  _dark={{ bg: "gray.600", color: "white" }}
                 />
                 <Wrap spacing={2}>
                   {editedLabels.map((label, idx) => (
@@ -153,6 +165,7 @@ function Task({
                         px={2}
                         py={0.5}
                         bg="gray.300"
+                        _dark={{ bg: "gray.500", color: "white" }}
                         borderRadius="md"
                         fontSize="xs"
                         align="center"
@@ -176,6 +189,11 @@ function Task({
                 size="xs"
                 mt={2}
                 colorScheme="black"
+                _dark={{
+                  bg: "gray.600",
+                  color: "white",
+                  _hover: { bg: "gray.500" },
+                }}
                 onClick={handleSaveEdit}
               >
                 Save
@@ -196,6 +214,8 @@ function Task({
                   setEditedPriority(priority || "");
                   setEditedLabels(labels || []);
                 }}
+                color="gray.800"
+                _dark={{ color: "gray.100" }}
               >
                 {title}
               </Text>
@@ -203,6 +223,7 @@ function Task({
                 <Text
                   fontSize="xs"
                   color="gray.600"
+                  _dark={{ color: "gray.300" }}
                   wordBreak="break-word"
                   cursor="pointer"
                   onClick={() => setIsEditing(true)}
@@ -213,6 +234,7 @@ function Task({
               <Text
                 fontSize="xs"
                 color="gray.500"
+                _dark={{ color: "gray.400" }}
                 onClick={() => setIsEditing(true)}
               >
                 Changed: {user}
@@ -245,7 +267,12 @@ function Task({
               {priority.toUpperCase()}
             </Badge>
           )}
-          <Text fontSize="xs" color="gray.400" ml="auto">
+          <Text
+            fontSize="xs"
+            color="gray.400"
+            _dark={{ color: "gray.500" }}
+            ml="auto"
+          >
             {new Date(createdAt).toLocaleDateString()}
           </Text>
         </Flex>
@@ -260,6 +287,7 @@ function Task({
                   px={2}
                   py={0.5}
                   bg="gray.300"
+                  _dark={{ bg: "gray.500", color: "white" }}
                   borderRadius="md"
                   fontSize="xs"
                 >

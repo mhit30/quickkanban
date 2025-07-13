@@ -191,14 +191,14 @@ function Home() {
               gap={2}
               wrap="wrap"
               align="center"
-              justify="flex-end"
+              justify="space-between"
               w="full"
             >
               <ColorModeButton />
 
               <form
                 onSubmit={handleCreateNewColumn}
-                style={{ display: "flex", gap: "0.5rem" }}
+                style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
               >
                 <Input
                   size="sm"

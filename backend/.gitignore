@@ -31,3 +31,5 @@ logs/
 /etc/letsencrypt/
 *.pem
 *.key
+
+*.task-definition.jsontask-definition.json

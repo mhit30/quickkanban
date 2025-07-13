@@ -22,8 +22,9 @@ const query = async (req, res) => {
     const userQueries = JSON.parse((await redis.hget(key, "user")) || "[]");
     userQueries.push(result.data.query);
     await redis.hset(key, "user", JSON.stringify(userQueries));
-    await redis.hset(key, 3600); // convo thread expires after an hour
+    await redis.expire(key, 3600); // convo thread expires after an hour
     //
+    console.log(queryUrl);
     // prompt the query api
     const assistantRes = await fetch(queryUrl, {
       method: "POST",
@@ -39,13 +40,16 @@ const query = async (req, res) => {
       return res.status(500).json({ success: false, error: "stream fail" });
     }
     res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Transfer-Encoding", "chunked");
+    res.flushHeaders();
 
     const reader = assistantRes.body.getReader();
+    const decoder = new TextDecoder();
     let assistantFullResponse = "";
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const chunk = new TextDecoder().decode(value);
+      const chunk = decoder.decode(value);
       assistantFullResponse += chunk;
       // write back to client simultaneously
       res.write(chunk);
@@ -58,6 +62,7 @@ const query = async (req, res) => {
     assistantResponses.push(assistantFullResponse);
     await redis.hset(key, "assistant", JSON.stringify(assistantResponses));
   } catch (err) {
+    console.log(err);
     return res
       .status(500)
       .json({ success: false, message: "Internal server error" });

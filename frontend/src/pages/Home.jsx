@@ -363,7 +363,6 @@ function Home() {
                   query: query,
                 }),
               });
-              handleLoading(false);
               if (!res.body) {
                 handleStreamUpdate("No stream available");
                 return;
@@ -371,6 +370,7 @@ function Home() {
               const reader = res.body.getReader();
               const decoder = new TextDecoder();
               handleStreaming(true);
+              handleLoading(false);
               while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;

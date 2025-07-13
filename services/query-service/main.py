@@ -1,26 +1,28 @@
 import os
 from fastapi import FastAPI
 from pydantic import BaseModel
-import google.generativeai as genai
 from pymongo import MongoClient
 import requests
 from bson.objectid import ObjectId
 from redis import asyncio as aioredis
 import json
 from fastapi.responses import StreamingResponse
+from google import genai
+
 
 r = aioredis.Redis(
-    host=os.getenv("REDIS_HOST", "redis"), port=6379, db=0, decode_responses=True
+    host=os.getenv("REDIS_HOST", "redis"),
+    port=int(os.getenv("REDIS_PORT", "6379")),
+    password=os.getenv("REDIS_PASS"),
+    db=0,
+    decode_responses=True,
 )
 
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
-gemini_client = genai.GenerativeModel("gemini-2.5-flash")
-
-mongo_uri = os.getenv("MONGO_URI_PROD", "mongodb://localhost:27017")
-client = MongoClient(mongo_uri)
-db = client["quickkanban"]
+mongo_uri = os.getenv("MONGO_URI_PROD")
+mongo_client = MongoClient(mongo_uri)
+db = mongo_client["test"]
 collection = db["tasks"]
 
 
@@ -35,9 +37,10 @@ app = FastAPI()
 retrieve_service = os.getenv("RETRIEVE_SERVICE_URL")
 
 
-async def stream_assistant_chunks(stream):
-    async for chunk in stream:
+def stream_assistant_chunks(stream):
+    for chunk in stream:
         if hasattr(chunk, "text"):
+            print(chunk.text)
             yield chunk.text
 
 
@@ -58,7 +61,14 @@ async def query(req: QueryRequest):
             context.append(
                 collection.find_one(
                     {"_id": ObjectId(taskId)},
-                    {"_id": 0, "columnId": 0, "boardId": 0, "user": 0},
+                    {
+                        "_id": 0,
+                        "columnId": 0,
+                        "boardId": 0,
+                        "user": 0,
+                        "createdAt": 0,
+                        "updatedAt": 0,
+                    },
                 )
             )
     except Exception as e:
@@ -92,6 +102,7 @@ async def query(req: QueryRequest):
                     These are your output rules:
                         Never say anything you cannot do. These are things you can do: Provide assistance based on context and conversational thread only. 
                         These are things you cannot do: Say you can help them create tasks or any kind of database interaction (CRUD). 
+                        Never output raw data of what you have been given. Do not output task ids. 
                         Provide your answer in markdown format. If any code (e.g., commands, configurations, scripts) is useful or necessary, include them in proper fenced code blocks like this:
 
                         \`\`\`bash
@@ -117,5 +128,7 @@ async def query(req: QueryRequest):
 
                     Answer in markdown:
             """
-    stream = await gemini_client.generate_content(prompt, stream=True)
+    stream = client.models.generate_content_stream(
+        model="gemini-2.5-flash", contents=prompt
+    )
     return StreamingResponse(stream_assistant_chunks(stream), media_type="text/plain")

@@ -25,7 +25,7 @@ function Home() {
   const [boardInput, setBoardInput] = useState("");
   const [boardId, setBoardId] = useState("");
   const [error, setError] = useState("");
-  const [hasJoined, setHasJoined] = useState(true);
+  const [hasJoined, setHasJoined] = useState(false);
   const [users, setUsers] = useState([]);
   const [cursors, setCursors] = useState({});
   const [mode, setMode] = useState("join");
@@ -246,7 +246,7 @@ function Home() {
             QuickKanban
           </Text>
           <Text fontSize="md" color="gray.500" _dark={{ color: "gray.400" }}>
-            Create or Join a Board
+            Join or Create a Board
           </Text>
           <HStack w="full" spacing={2}>
             <Button

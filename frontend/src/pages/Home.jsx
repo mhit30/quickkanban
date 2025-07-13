@@ -32,7 +32,7 @@ function Home() {
 
   const handleJoin = async () => {
     if (!boardInput.trim()) {
-      setError("Please enter a board ID or slug.");
+      setError("Please enter a board ID");
       return;
     }
     try {

@@ -88,7 +88,7 @@
         },
         {
           "name": "EMBED_SERVICE_URL",
-          "value": "http://query-service:8001"
+          "value": "http://embed-service:8001"
         },
         {
           "name": "QUERY_SERVICE_URL",
@@ -168,11 +168,11 @@
       "secrets": [
         {
           "name": "GEMINI_API_KEY",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:gemini_api_key"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:gem"
         },
         {
           "name": "QDRANT_API_KEY",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:qdrant_api"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:qdrant"
         },
         {
           "name": "QDRANT_URL_KEY",
@@ -204,11 +204,11 @@
       "secrets": [
         {
           "name": "GEMINI_API_KEY",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:gemini_api_key"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:gem"
         },
         {
           "name": "QDRANT_API_KEY",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:qdrant_api"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:qdrant"
         },
         {
           "name": "QDRANT_URL_KEY",
@@ -229,14 +229,14 @@
           "hostPort": 0
         }
       ],
-      "links": ["retrieve-service"],
+      "links": ["retrieve-service", "redis"],
       "secrets": [
         {
           "name": "GEMINI_API_KEY",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:gemini_api_key"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:gem"
         },
         {
-          "name": "MONGO_URI",
+          "name": "MONGO_URI_PROD",
           "valueFrom": "arn:aws:secretsmanager:us-east-1:582049327707:secret:mongo_uri_prod"
         },
         {

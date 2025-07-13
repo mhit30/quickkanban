@@ -405,7 +405,6 @@ function Home() {
               handleStreaming,
               handleLoading
             ) => {
-              const start = performance.now();
               const res = await fetch(`${apiURL}/query`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -422,8 +421,6 @@ function Home() {
               const reader = res.body.getReader();
               const decoder = new TextDecoder();
               handleLoading(false);
-              const stop = performance.now();
-              console.log(`Total response time: ${stop - start} ms`);
               while (true) {
                 const { done, value } = await reader.read();
                 if (done) {

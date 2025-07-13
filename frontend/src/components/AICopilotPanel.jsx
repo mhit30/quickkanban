@@ -87,7 +87,7 @@ function AICopilotPanel({ onSendQuery }) {
       >
         {loading ? (
           <Spinner />
-        ) : streaming ? (
+        ) : streaming || response !== "" ? (
           <ReactMarkdown
             children={response || <Spinner />}
             remarkPlugins={[remarkGfm]}

@@ -35,6 +35,7 @@ function AICopilotPanel({ onSendQuery }) {
   };
   const handleSend = async () => {
     if (!query.trim()) return;
+    setQuery("");
     setResponse("");
     try {
       await onSendQuery(

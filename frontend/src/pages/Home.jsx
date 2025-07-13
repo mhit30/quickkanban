@@ -194,6 +194,8 @@ function Home() {
               justify="flex-end"
               w="full"
             >
+              <ColorModeButton />
+
               <form
                 onSubmit={handleCreateNewColumn}
                 style={{ display: "flex", gap: "0.5rem" }}
@@ -240,7 +242,6 @@ function Home() {
               >
                 Leave
               </Button>
-              <ColorModeButton />
             </Flex>
           </Flex>
         </Box>

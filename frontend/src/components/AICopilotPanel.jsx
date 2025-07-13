@@ -30,11 +30,11 @@ function AICopilotPanel({ onSendQuery }) {
     setLoading(isLoading);
   };
   const handleStreaming = (isStreaming) => {
-    setLoading(false);
     setStreaming(isStreaming);
   };
   const handleSend = async () => {
     if (!query.trim()) return;
+    setLoading(true);
     setQuery("");
     setResponse("");
     try {
@@ -88,7 +88,7 @@ function AICopilotPanel({ onSendQuery }) {
       >
         {loading ? (
           <Spinner />
-        ) : streaming || response !== "" ? (
+        ) : response !== "" ? (
           <ReactMarkdown
             children={response || <Spinner />}
             remarkPlugins={[remarkGfm]}

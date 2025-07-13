@@ -353,7 +353,6 @@ function Home() {
               handleStreaming,
               handleLoading
             ) => {
-              handleLoading(true);
               const res = await fetch(`${apiURL}/query`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -369,15 +368,15 @@ function Home() {
               }
               const reader = res.body.getReader();
               const decoder = new TextDecoder();
-              handleStreaming(true);
               handleLoading(false);
               while (true) {
                 const { done, value } = await reader.read();
-                if (done) break;
+                if (done) {
+                  break;
+                }
                 const chunk = decoder.decode(value, { stream: true });
                 handleStreamUpdate(chunk);
               }
-              handleStreaming(false);
             }}
           />
         </Flex>

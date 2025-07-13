@@ -34,6 +34,7 @@ function AICopilotPanel({ onSendQuery }) {
   };
   const handleSend = async () => {
     if (!query.trim()) return;
+    setStreaming(true);
     setLoading(true);
     setQuery("");
     setResponse("");
@@ -94,6 +95,8 @@ function AICopilotPanel({ onSendQuery }) {
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
           />
+        ) : streaming ? (
+          <Spinner />
         ) : (
           <Text>Kanban Assistant responses will appear here</Text>
         )}

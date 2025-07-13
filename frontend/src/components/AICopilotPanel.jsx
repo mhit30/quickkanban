@@ -85,15 +85,17 @@ function AICopilotPanel({ onSendQuery }) {
         color="gray.800"
         whiteSpace="pre-wrap"
       >
-        {streaming || !loading ? (
+        {loading ? (
+          <Spinner />
+        ) : streaming ? (
           <ReactMarkdown
-            children={response || "AI responses will appear here."}
+            children={response || <Spinner />}
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
           />
-        ) : loading ? (
-          <Spinner />
-        ) : null}
+        ) : (
+          <Text>Kanban Assistant responses will appear here</Text>
+        )}
       </Box>
 
       <Box

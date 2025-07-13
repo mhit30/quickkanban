@@ -90,7 +90,7 @@ function AICopilotPanel({ onSendQuery }) {
           <Spinner />
         ) : response !== "" ? (
           <ReactMarkdown
-            children={response || <Spinner />}
+            children={response || "Loading..."}
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
           />

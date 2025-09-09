@@ -19,6 +19,13 @@ const apiURL = import.meta.env.VITE_API_URL_PROD;
 const bounce = keyframes`0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); }`;
 
 function Home() {
+  useEffect(() => {
+    window.location.replace("https://github.com/mhit30/quickkanban");
+  }, []);
+
+  return null
+
+  // Please remove the code above if you are in development mode.
   const socketRef = useRef(null);
   const [board, setBoard] = useState(null);
   const [username, setUsername] = useState("");
@@ -30,7 +37,8 @@ function Home() {
   const [cursors, setCursors] = useState({});
   const [mode, setMode] = useState("join");
   const [newColumnName, setNewColumnName] = useState("");
-
+  
+  
   const handleJoin = async () => {
     if (!boardInput.trim()) {
       setError("Please enter a board ID");
@@ -98,6 +106,7 @@ function Home() {
   };
 
   useEffect(() => {
+    navigate("https://github.com/mhit30/quickkanban")
     const socket = socketRef.current;
     if (!socket) return;
 

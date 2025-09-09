@@ -6,8 +6,6 @@
 
 **QuickKanban** is a real-time, collaborative kanban board with an AI Copilot assistant for intelligent task tracking, built for efficient project planning and team coordination.
 
-🌐 **Live Demo:** [https://quickkanban.xyz](https://quickkanban.xyz)
-
 ---
 
 ## 🚀 Tech Stack
